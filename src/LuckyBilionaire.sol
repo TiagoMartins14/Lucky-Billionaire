@@ -40,6 +40,11 @@ import {VRFConsumerBaseV2Plus} from "@chainlink/v0.8/vrf/dev/VRFConsumerBaseV2Pl
 
 contract LuckyBilionaire is VRFConsumerBaseV2Plus {
     /*//////////////////////////////////////////////////////////////
+                                 ERRORS
+    //////////////////////////////////////////////////////////////*/
+	error LuckyBilionaire__GuessOutOfRange();
+
+    /*//////////////////////////////////////////////////////////////
                             STATE VARIABLES
     //////////////////////////////////////////////////////////////*/
 	uint8 private constant HOUSE_EARNINGS_PERCENTAGE = 5; // 5%
@@ -50,7 +55,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus {
 	uint32 private constant NUM_WORDS = 1;
 
 	mapping(uint256 number => address[] player) public s_playersGuesses;
-	mapping(address player => uint256 guessedTimes) public s_numberGuesses;
+	mapping(uint256 number => mapping(address player => uint256 timesGuessed)) public s_numberGuesses;
 	uint256 public s_totalPot;
 	uint256 public s_firstPrize;
 	uint256 public s_secondPrize;
@@ -68,7 +73,19 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus {
 		s_subId = subId;
 	}
 
-	function savePlayerGuess(uint256 _guess) public {}
+	function savePlayerGuess(uint256 _guess) public {
+		if (_guess < MINIMUM_LUCKY_NUMBER || _guess > MAXIMUM_LUCKY_NUMBER) {
+			revert LuckyBilionaire__GuessOutOfRange();
+		}
+
+		s_totalPot += 1 ether;
+
+		if (s_playersGuesses[_guess] && (s_playersGuesses[_guess].find(msg.sender) == address(0))) {
+			s_playersGuesses[_guess] = s_playersGuesses[_guess].push(msg.sender);
+		}
+
+		s_numberGuesses[_guess][msg.sender] += 1;		
+	}
 
 	/**
 	 * @notice Requests a new set of random numbers from Chainlink VRF v2.5.
@@ -163,7 +180,16 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus {
 		_secondPrize = firstPrizePot / numberOfWinners;
 	}
 
-	function distributeFirstPrize() private {}
+	function distributeFirstPrize() private {
+		uint256 firstPrizeParcel = calculateSizeOfFirstPrizeWinners();
+		uint256 firstPrizePot = calcuteFirstPrize();
+		uint256 numberOfFirstPrizeWinners = 0;
+		address[] memory firstPrizeWinners = s_playersGuesses[s_luckyNumber];
+
+		for (uint8 i = 0; i < firstPrizeWinners.length; i++) {
+			numberOfFirstPrizeWinners += s_numberGuesses[s_luckyNumber][firstPrizeWinners[i]];
+		}
+	}
 
 	function distributeSecondPrize() private {}
 
