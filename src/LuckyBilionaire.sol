@@ -47,15 +47,19 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus {
     /*//////////////////////////////////////////////////////////////
                             STATE VARIABLES
     //////////////////////////////////////////////////////////////*/
-	uint8 private constant HOUSE_EARNINGS_PERCENTAGE = 5; // 5%
-	uint8 MINIMUM_LUCKY_NUMBER = 1;
-	uint8 MAXIMUM_LUCKY_NUMBER = 50;
+	// uint8 private constant HOUSE_EARNINGS_PERCENTAGE = 5; // 5%
+	uint8 private constant FIRST_WIN_PERCENTAGE = 80; // 80%
+	uint8 private constant SECOND_WIN_PERCENTAGE = 15; // 15%
+	uint8 private MINIMUM_LUCKY_NUMBER = 1;
+	uint8 private MAXIMUM_LUCKY_NUMBER = 50;
+	uint256 private constant BET_COST = 1 ether;
 	uint16 private constant REQUEST_CONFIRMATIONS = 100;
 	uint32 private constant CALLBACK_GAS_LIMIT = 150000;
 	uint32 private constant NUM_WORDS = 1;
 
-	mapping(uint256 number => address[] player) public s_playersGuesses;
+	mapping(uint256 number => address[] player) public s_playersByNumberGuess;
 	mapping(uint256 number => mapping(address player => uint256 timesGuessed)) public s_numberGuesses;
+	uint256 private s_vault;
 	uint256 public s_totalPot;
 	uint256 public s_firstPrize;
 	uint256 public s_secondPrize;
@@ -73,6 +77,14 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus {
 		s_subId = subId;
 	}
 
+	function updateFirstPrize () private {
+		s_firstPrize += ((BET_COST * FIRST_WIN_PERCENTAGE) / 100);
+	}
+
+	function updateSecondPrize () private {
+		s_secondPrize += ((BET_COST * SECOND_WIN_PERCENTAGE) / 100);
+	}
+
 	function savePlayerGuess(uint256 _guess) public {
 		if (_guess < MINIMUM_LUCKY_NUMBER || _guess > MAXIMUM_LUCKY_NUMBER) {
 			revert LuckyBilionaire__GuessOutOfRange();
@@ -80,8 +92,8 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus {
 
 		s_totalPot += 1 ether;
 
-		if (s_playersGuesses[_guess] && (s_playersGuesses[_guess].find(msg.sender) == address(0))) {
-			s_playersGuesses[_guess] = s_playersGuesses[_guess].push(msg.sender);
+		if (s_numberGuesses[_guess][msg.sender] == 0) {
+			s_playersByNumberGuess[_guess].push(msg.sender);
 		}
 
 		s_numberGuesses[_guess][msg.sender] += 1;		
@@ -125,10 +137,10 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus {
 	 */
 	function calculateSizeOfFirstPrizeWinners() private view returns (uint256 numberOfFirstPrizeWinners) {
 		numberOfFirstPrizeWinners = 0;
-		address[] memory firstPrizeWinners = s_playersGuesses[s_luckyNumber];
+		address[] memory firstPrizeWinners = s_playersByNumberGuess[s_luckyNumber];
 		
 		for (uint8 i = 0; i < firstPrizeWinners.length; i++) {
-			numberOfFirstPrizeWinners += s_numberGuesses[firstPrizeWinners[i]];
+			numberOfFirstPrizeWinners += s_numberGuesses[s_luckyNumber][firstPrizeWinners[i]];
 		}
 	}
 	
@@ -154,37 +166,45 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus {
 			afterLuckyNumber = s_luckyNumber + 1;
 		}
 
-		address[] memory secondPrizeWinnersBeforeNumber = s_playersGuesses[beforeLuckyNumber];
-		address[] memory secondPrizeWinnersAfterNumber = s_playersGuesses[afterLuckyNumber];
+		address[] memory secondPrizeWinnersBeforeNumber = s_playersByNumberGuess[beforeLuckyNumber];
+		address[] memory secondPrizeWinnersAfterNumber = s_playersByNumberGuess[afterLuckyNumber];
 
 		for (uint8 i = 0; i < secondPrizeWinnersBeforeNumber.length; i++) {
-			numberOfSecondPrizeWinners += s_numberGuesses[secondPrizeWinnersBeforeNumber[i]];
+			numberOfSecondPrizeWinners += s_numberGuesses[beforeLuckyNumber][secondPrizeWinnersBeforeNumber[i]];
 		}
 
 		for (uint8 i = 0; i < secondPrizeWinnersAfterNumber.length; i++) {
-			numberOfSecondPrizeWinners += s_numberGuesses[secondPrizeWinnersAfterNumber[i]];
+			numberOfSecondPrizeWinners += s_numberGuesses[afterLuckyNumber][secondPrizeWinnersAfterNumber[i]];
 		}
 	}
 
+	/**
+	 * @notice Calculates the first prize amount based on the total pot and the number of winners.
+	 * @dev The first prize is 80% of the total pot.
+	 * @return _firstPrize The calculated first prize amount.
+	 */
 	function calcuteFirstPrize() private view returns (uint256 _firstPrize) {
-		uint256 firstPrizePot = (s_totalPot * 80) / 100;
-		uint256 numberOfWinners = calculateSizeOfFirstPrizeWinners();
-		require(numberOfWinners > 0, "No winners this week");
-		_firstPrize = firstPrizePot / numberOfWinners;
+		_firstPrize = (s_totalPot * 80) / 100;
 	}
 
+	/**
+	 * @notice Calculates the second prize amount based on the total pot.
+	 * @dev The second prize is 15% of the total pot.
+	 * @return _secondPrize The calculated second prize amount.
+	 */
 	function calculateSecondPrize() private view returns (uint256 _secondPrize) {
-		uint256 firstPrizePot = (s_totalPot * 20) / 100;
-		uint256 numberOfWinners = calculateSizeOfFirstPrizeWinners();
-		require(numberOfWinners > 0, "No winners this week");
-		_secondPrize = firstPrizePot / numberOfWinners;
+		_secondPrize = (s_totalPot * 15) / 100;
 	}
 
+	/**
+	 * @notice 
+	 */
 	function distributeFirstPrize() private {
 		uint256 firstPrizeParcel = calculateSizeOfFirstPrizeWinners();
+		require(firstPrizeParcel > 0, "No first prize winners");
 		uint256 firstPrizePot = calcuteFirstPrize();
 		uint256 numberOfFirstPrizeWinners = 0;
-		address[] memory firstPrizeWinners = s_playersGuesses[s_luckyNumber];
+		address[] memory firstPrizeWinners = s_playersByNumberGuess[s_luckyNumber];
 
 		for (uint8 i = 0; i < firstPrizeWinners.length; i++) {
 			numberOfFirstPrizeWinners += s_numberGuesses[s_luckyNumber][firstPrizeWinners[i]];
