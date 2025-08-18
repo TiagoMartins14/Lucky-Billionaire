@@ -65,6 +65,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard {
 
     mapping(uint256 round => mapping(uint256 number => address[] player)) public s_playersByNumberGuess;
     mapping(uint256 round => mapping(uint256 number => mapping(address player => uint256 timesGuessed))) public s_numberGuesses;
+	mapping(uint256 round => uint256 number) public s_luckyNumber;
     mapping(address player => prize[] prizes) public s_pendingWithdrawals;
 	uint256 public s_round;
     uint256 public s_totalPot;
@@ -74,7 +75,6 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard {
     uint256 public s_lastFirstPrize;
     uint256 public s_lastSecondPrize;
     uint256 private s_vault;
-    uint256 private s_luckyNumber;
     bytes32 private immutable s_keyHash;
     uint256 private immutable s_subId;
 
@@ -138,7 +138,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard {
      */
     function fulfillRandomWords(uint256, /*_requestId*/ uint256[] calldata _randomWords) internal override {
         uint256 rawRandom = _randomWords[0];
-        s_luckyNumber = (rawRandom % MAXIMUM_LUCKY_NUMBER) + 1;
+        s_luckyNumber[s_round] = (rawRandom % MAXIMUM_LUCKY_NUMBER) + 1;
     }
 
     /**
@@ -146,10 +146,10 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard {
      */
     function timesTheLuckyNumberWasGuessed() private view returns (uint256 numberOfFirstPrizeWinners) {
         numberOfFirstPrizeWinners = 0;
-        address[] memory firstPrizeWinners = s_playersByNumberGuess[s_round][s_luckyNumber];
+        address[] memory firstPrizeWinners = s_playersByNumberGuess[s_round][s_luckyNumber[s_round]];
 
         for (uint8 i = 0; i < firstPrizeWinners.length; i++) {
-            numberOfFirstPrizeWinners += s_numberGuesses[s_round][s_luckyNumber][firstPrizeWinners[i]];
+            numberOfFirstPrizeWinners += s_numberGuesses[s_round][s_luckyNumber[s_round]][firstPrizeWinners[i]];
         }
     }
 
@@ -163,16 +163,16 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard {
         uint256 beforeLuckyNumber;
         uint256 afterLuckyNumber;
 
-        if (s_luckyNumber == MINIMUM_LUCKY_NUMBER) {
+        if (s_luckyNumber[s_round] == MINIMUM_LUCKY_NUMBER) {
             beforeLuckyNumber = MAXIMUM_LUCKY_NUMBER;
         } else {
-            beforeLuckyNumber = s_luckyNumber - 1;
+            beforeLuckyNumber = s_luckyNumber[s_round] - 1;
         }
 
-        if (s_luckyNumber == MAXIMUM_LUCKY_NUMBER) {
+        if (s_luckyNumber[s_round] == MAXIMUM_LUCKY_NUMBER) {
             afterLuckyNumber = MINIMUM_LUCKY_NUMBER;
         } else {
-            afterLuckyNumber = s_luckyNumber + 1;
+            afterLuckyNumber = s_luckyNumber[s_round] + 1;
         }
 
         address[] memory secondPrizeWinnersBeforeNumber = s_playersByNumberGuess[s_round][beforeLuckyNumber];
@@ -194,10 +194,10 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard {
         uint256 overallCorrectLuckyNumberGuesses = timesTheLuckyNumberWasGuessed();
         require(overallCorrectLuckyNumberGuesses > 0, "No first prize winners");
         uint256 individualPrizeParcel = s_firstPrize / overallCorrectLuckyNumberGuesses;
-        address[] memory firstPrizeWinners = s_playersByNumberGuess[s_round][s_luckyNumber];
+        address[] memory firstPrizeWinners = s_playersByNumberGuess[s_round][s_luckyNumber[s_round]];
 
         for (uint8 i = 0; i < firstPrizeWinners.length; i++) {
-            uint256 timesGuessed = s_numberGuesses[s_round][s_luckyNumber][firstPrizeWinners[i]];
+            uint256 timesGuessed = s_numberGuesses[s_round][s_luckyNumber[s_round]][firstPrizeWinners[i]];
             prize memory winnerPrize;
             winnerPrize.amountWon = individualPrizeParcel * timesGuessed;
             winnerPrize.dateWon = block.timestamp;
@@ -212,10 +212,10 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard {
         uint256 overallAlmosLuckyNumberGuesses = timesTheLuckyNumberWasAlmostGuessed();
         require(overallAlmosLuckyNumberGuesses > 0, "No second prize winners");
         uint256 individualPrizeParcel = s_secondPrize / overallAlmosLuckyNumberGuesses;
-        address[] memory secondPrizeWinners = s_playersByNumberGuess[s_round][s_luckyNumber];
+        address[] memory secondPrizeWinners = s_playersByNumberGuess[s_round][s_luckyNumber[s_round]];
 
         for (uint8 i = 0; i < secondPrizeWinners.length; i++) {
-            uint256 timesGuessed = s_numberGuesses[s_round][s_luckyNumber][secondPrizeWinners[i]];
+            uint256 timesGuessed = s_numberGuesses[s_round][s_luckyNumber[s_round]][secondPrizeWinners[i]];
             prize memory winnerPrize;
             winnerPrize.amountWon = individualPrizeParcel * timesGuessed;
             winnerPrize.dateWon = block.timestamp;
@@ -251,20 +251,20 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard {
         uint256 beforeLuckyNumber;
         uint256 afterLuckyNumber;
 
-        if (s_luckyNumber == MINIMUM_LUCKY_NUMBER) {
+        if (s_luckyNumber[s_round] == MINIMUM_LUCKY_NUMBER) {
             beforeLuckyNumber = MAXIMUM_LUCKY_NUMBER;
         } else {
-            beforeLuckyNumber = s_luckyNumber - 1;
+            beforeLuckyNumber = s_luckyNumber[s_round] - 1;
         }
 
-        if (s_luckyNumber == MAXIMUM_LUCKY_NUMBER) {
+        if (s_luckyNumber[s_round] == MAXIMUM_LUCKY_NUMBER) {
             afterLuckyNumber = MINIMUM_LUCKY_NUMBER;
         } else {
-            afterLuckyNumber = s_luckyNumber + 1;
+            afterLuckyNumber = s_luckyNumber[s_round] + 1;
         }
 
         if (
-            s_playersByNumberGuess[s_round][s_luckyNumber].length > 0
+            s_playersByNumberGuess[s_round][s_luckyNumber[s_round]].length > 0
                 && (
                     s_playersByNumberGuess[s_round][beforeLuckyNumber].length > 0
                         || s_playersByNumberGuess[s_round][afterLuckyNumber].length > 0
@@ -272,12 +272,12 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard {
         ) {
             s_totalPot = 0;
         } else if (
-            s_playersByNumberGuess[s_round][s_luckyNumber].length > 0 && s_playersByNumberGuess[s_round][beforeLuckyNumber].length == 0
+            s_playersByNumberGuess[s_round][s_luckyNumber[s_round]].length > 0 && s_playersByNumberGuess[s_round][beforeLuckyNumber].length == 0
                 && s_playersByNumberGuess[s_round][afterLuckyNumber].length == 0
         ) {
             s_totalPot = secondWinnersShare;
         } else if (
-            s_playersByNumberGuess[s_round][s_luckyNumber].length == 0
+            s_playersByNumberGuess[s_round][s_luckyNumber[s_round]].length == 0
                 && (
                     s_playersByNumberGuess[s_round][beforeLuckyNumber].length > 0
                         || s_playersByNumberGuess[s_round][afterLuckyNumber].length > 0
@@ -289,16 +289,25 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard {
         }
 	}
 
+	function retreiveUnclaimedPrizes() private {
+		if (s_round > 4) {
+			for (uint8 i = 4; i > 0; i--) {
+				uint256 round = s_round - i;
+				uint256 luckyNumber = s_luckyNumber[round];
+				for (uint256 j = 0; j < s_playersByNumberGuess[round][luckyNumber].length; j++) {
+
+				} 
+			}
+		}
+		
+	}
+
 	function updateStateVariablesFornewRound() private {
 		s_round++;
         s_lastFirstPrize = s_firstPrize;
         s_lastSecondPrize = s_secondPrize;
 		s_firstPrize = s_totalPot * FIRST_WIN_PERCENTAGE / 100;
 		s_secondPrize = s_totalPot * SECOND_WIN_PERCENTAGE / 100;
-	}
-
-	function cleanUpExpiredWithdrawals() private {
-		
 	}
 
     function startNewRoundCleanUp() private {
