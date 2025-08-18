@@ -228,7 +228,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard {
         prize[] storage playerPrizes = s_pendingWithdrawals[msg.sender];
 
         for (uint256 i = 0; i < playerPrizes.length; i++) {
-            if (block.timestamp - playerPrizes[i].dateWon <= 30 days) {
+            if (block.timestamp - playerPrizes[i].dateWon <= 28 days) {
                 amount += playerPrizes[i].amountWon;
                 playerPrizes[i] = playerPrizes[playerPrizes.length - 1];
                 playerPrizes.pop();
@@ -295,11 +295,14 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard {
 				uint256 round = s_round - i;
 				uint256 luckyNumber = s_luckyNumber[round];
 				for (uint256 j = 0; j < s_playersByNumberGuess[round][luckyNumber].length; j++) {
-
+					prize[] storage playerPrizes = s_pendingWithdrawals[s_playersByNumberGuess[round][luckyNumber][j]];
+					if (block.timestamp - playerPrizes[i].dateWon > 28 days) {
+					playerPrizes[i] = playerPrizes[playerPrizes.length - 1];
+					playerPrizes.pop();
+          		  }
 				} 
 			}
-		}
-		
+		}		
 	}
 
 	function updateStateVariablesFornewRound() private {
