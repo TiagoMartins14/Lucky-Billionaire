@@ -1,0 +1,2 @@
+Installed openzeppelin-contracts v5.4.0
+Installed chainlink-brownie-contracts v1.3.0
