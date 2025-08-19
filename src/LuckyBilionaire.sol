@@ -35,25 +35,20 @@ pragma solidity ^0.8.19;
 import {VRFCoordinatorV2_5} from "@chainlink/v0.8/vrf/dev/VRFCoordinatorV2_5.sol";
 import {VRFV2PlusClient} from "@chainlink/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 import {VRFConsumerBaseV2Plus} from "@chainlink/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
+import {ConfirmedOwner} from "@chainlink/v0.8/shared/access/ConfirmedOwner.sol";
 import {ReentrancyGuard} from "@openzeppelin/security/ReentrancyGuard.sol";
+import {Pausable} from "@openzeppelin/security/Pausable.sol";
 
-contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard {
-    /*//////////////////////////////////////////////////////////////
-                                 ERRORS
-    //////////////////////////////////////////////////////////////*/
-    error LuckyBilionaire__GuessOutOfRange();
-    error LuckyBilionaire__NoFundsToWithdraw();
-    error LuckyBilionaire_TransferFailed();
-
+contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     /*//////////////////////////////////////////////////////////////
                             STATE VARIABLES
     //////////////////////////////////////////////////////////////*/
-    uint8 private constant HOUSE_EARNINGS_PERCENTAGE = 5; // 5%
-    uint8 private constant FIRST_WIN_PERCENTAGE = 80; // 80%
-    uint8 private constant SECOND_WIN_PERCENTAGE = 15; // 15%
+    uint8 private constant HOUSE_COMISSION = 5; // 5%
+    uint8 public constant FIRST_WIN_PERCENTAGE = 80; // 80%
+    uint8 public constant SECOND_WIN_PERCENTAGE = 20; // 15%
+    uint256 public constant BET_COST = 1 ether;
     uint8 private MINIMUM_LUCKY_NUMBER = 1;
     uint8 private MAXIMUM_LUCKY_NUMBER = 50;
-    uint256 private constant BET_COST = 1 ether;
     uint16 private constant REQUEST_CONFIRMATIONS = 100;
     uint32 private constant CALLBACK_GAS_LIMIT = 150000;
     uint32 private constant NUM_WORDS = 1;
@@ -64,13 +59,14 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard {
     }
 
     mapping(uint256 round => mapping(uint256 number => address[] player)) public s_playersByNumberGuess;
-    mapping(uint256 round => mapping(uint256 number => mapping(address player => uint256 timesGuessed))) public s_numberGuesses;
-	mapping(uint256 round => uint256 number) public s_luckyNumber;
+    mapping(uint256 round => mapping(uint256 number => mapping(address player => uint256 timesGuessed))) public
+        s_numberGuesses;
+    mapping(uint256 round => uint256 number) public s_luckyNumber;
     mapping(address player => prize[] prizes) public s_pendingWithdrawals;
-	uint256 public s_round;
+    uint256 public s_round;
     uint256 public s_totalPot;
-    uint256 public s_firstPrize;
-    uint256 public s_secondPrize;
+    uint256 public s_firstPrize; // s_totalPot * FIRST_WIN_PERCENTAGE / 100
+    uint256 public s_secondPrize; // s_totalPot * SECOND_WIN_PERCENTAGE / 100
     uint256 public s_lastLuckyNumber;
     uint256 public s_lastFirstPrize;
     uint256 public s_lastSecondPrize;
@@ -79,29 +75,39 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard {
     uint256 private immutable s_subId;
 
     /*//////////////////////////////////////////////////////////////
+                                 ERRORS
+    //////////////////////////////////////////////////////////////*/
+    error LuckyBilionaire__GuessOutOfRange();
+    error LuckyBilionaire__NoFundsToWithdraw();
+    error LuckyBilionaire_TransferFailed();
+    error LuckyBilionaire__IncorrectPaymentValue();
+
+    /*//////////////////////////////////////////////////////////////
                                FUNCTIONS
     //////////////////////////////////////////////////////////////*/
     constructor(address vrfCoordinator, bytes32 keyHash, uint256 subId) VRFConsumerBaseV2Plus(vrfCoordinator) {
         s_vrfCoordinator = VRFCoordinatorV2_5(vrfCoordinator);
         s_keyHash = keyHash;
         s_subId = subId;
-		s_round = 0;
+        s_round = 0;
     }
 
-    function updateFirstPrize() private {
-        s_firstPrize += ((BET_COST * FIRST_WIN_PERCENTAGE) / 100);
-    }
+    /**
+     * @notice Saves the player's guess and updates the total prize pot.
+     * @notice Each bet costs BET_COST.
+     * @param _guess The player's guess. A number within MINIMUM_LUCKY_NUMBER and MAXIMUM_LUCKY_NUMBER.
+     */
+    function savePlayerGuess(uint256 _guess) public payable whenNotPaused {
+        if (msg.value != 1 ether) {
+            revert LuckyBilionaire__IncorrectPaymentValue();
+        }
 
-    function updateSecondPrize() private {
-        s_secondPrize += ((BET_COST * SECOND_WIN_PERCENTAGE) / 100);
-    }
-
-    function savePlayerGuess(uint256 _guess) public {
         if (_guess < MINIMUM_LUCKY_NUMBER || _guess > MAXIMUM_LUCKY_NUMBER) {
             revert LuckyBilionaire__GuessOutOfRange();
         }
 
-        s_totalPot += 1 ether;
+        s_vault += (BET_COST * HOUSE_COMISSION) / 100;
+        s_totalPot += BET_COST - s_vault;
 
         if (s_numberGuesses[s_round][_guess][msg.sender] == 0) {
             s_playersByNumberGuess[s_round][_guess].push(msg.sender);
@@ -223,7 +229,11 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard {
         }
     }
 
-    function withdraw() external nonReentrant {
+    /**
+     * @notice Allows players to claim any prizes they've won within the last 28 days.
+     * @notice After 28 days the prize is redeemed as uncollected and reverts as house earnings.
+     */
+    function claimPrize() external nonReentrant {
         uint256 amount = 0;
         prize[] storage playerPrizes = s_pendingWithdrawals[msg.sender];
 
@@ -244,8 +254,11 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard {
         }
     }
 
-	function calculateNewRoundInitialPot() private {
-		uint256 vaultShare = s_totalPot * HOUSE_EARNINGS_PERCENTAGE / 100;
+    /**
+     * @notice Calculates new round's initial pot depending on last week's winners.
+     * @notice In case of no winner and/or no second winner, the correspondent prize rolls to the new round.
+     */
+    function calculateNewRoundInitialPot() private {
         uint256 winnersShare = s_totalPot * FIRST_WIN_PERCENTAGE / 100;
         uint256 secondWinnersShare = s_totalPot * SECOND_WIN_PERCENTAGE / 100;
         uint256 beforeLuckyNumber;
@@ -272,7 +285,8 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard {
         ) {
             s_totalPot = 0;
         } else if (
-            s_playersByNumberGuess[s_round][s_luckyNumber[s_round]].length > 0 && s_playersByNumberGuess[s_round][beforeLuckyNumber].length == 0
+            s_playersByNumberGuess[s_round][s_luckyNumber[s_round]].length > 0
+                && s_playersByNumberGuess[s_round][beforeLuckyNumber].length == 0
                 && s_playersByNumberGuess[s_round][afterLuckyNumber].length == 0
         ) {
             s_totalPot = secondWinnersShare;
@@ -284,41 +298,81 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard {
                 )
         ) {
             s_totalPot = winnersShare;
-        } else {
-            s_totalPot = s_totalPot - vaultShare;
         }
-	}
-
-	function retreiveUnclaimedPrizes() private {
-		if (s_round > 4) {
-			for (uint8 i = 4; i > 0; i--) {
-				uint256 round = s_round - i;
-				uint256 luckyNumber = s_luckyNumber[round];
-				for (uint256 j = 0; j < s_playersByNumberGuess[round][luckyNumber].length; j++) {
-					prize[] storage playerPrizes = s_pendingWithdrawals[s_playersByNumberGuess[round][luckyNumber][j]];
-					if (block.timestamp - playerPrizes[i].dateWon > 28 days) {
-					playerPrizes[i] = playerPrizes[playerPrizes.length - 1];
-					playerPrizes.pop();
-          		  }
-				} 
-			}
-		}		
-	}
-
-	function updateStateVariablesFornewRound() private {
-		s_round++;
-        s_lastFirstPrize = s_firstPrize;
-        s_lastSecondPrize = s_secondPrize;
-		s_firstPrize = s_totalPot * FIRST_WIN_PERCENTAGE / 100;
-		s_secondPrize = s_totalPot * SECOND_WIN_PERCENTAGE / 100;
-	}
-
-    function startNewRoundCleanUp() private {
-    // mapping(address player => prize[] prizes) public s_pendingWithdrawals;
-    // uint256 private s_vault;
-    // uint256 private s_luckyNumber;
-
     }
 
-    function distributePrizesAndStartNewRound() external {}
+    /**
+     * @notice Retreives unclaimed prizes.
+     * @dev Prizes are deemed unclaimed if not withdrawn within 28 days.
+     */
+    function retreiveUnclaimedPrizes() private {
+        if (s_round > 4) {
+            for (uint8 i = 4; i > 0; i--) {
+                uint256 round = s_round - i;
+                uint256 luckyNumber = s_luckyNumber[round];
+                for (uint256 j = 0; j < s_playersByNumberGuess[round][luckyNumber].length; j++) {
+                    prize[] storage playerPrizes = s_pendingWithdrawals[s_playersByNumberGuess[round][luckyNumber][j]];
+                    if (block.timestamp - playerPrizes[i].dateWon > 28 days) {
+                        s_vault += playerPrizes[i].amountWon;
+                        playerPrizes[i] = playerPrizes[playerPrizes.length - 1];
+                        playerPrizes.pop();
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @notice Updates states variables for new round.
+     */
+    function updateStateVariablesFornewRound() private {
+        s_round++;
+        s_lastFirstPrize = s_firstPrize;
+        s_lastSecondPrize = s_secondPrize;
+        s_firstPrize = s_totalPot * FIRST_WIN_PERCENTAGE / 100;
+        s_secondPrize = s_totalPot * SECOND_WIN_PERCENTAGE / 100;
+    }
+
+    /**
+     * @notice Requests a random number from VRF Chainlink and then distributes prizes accordingly.
+     */
+    function announceLuckyNumber() private {
+        requestRandomNumber();
+        distributeFirstPrize();
+        distributeSecondPrize();
+    }
+
+    /**
+     * @notice Retreives any unclaimed prizes within the last 28 days.
+     * @notice Calculates new round's initial pot depending on last round's result.
+     * @notice Updates the relevant state variables for new round.
+     */
+    function startNewRoundCleanUp() private {
+        retreiveUnclaimedPrizes();
+        calculateNewRoundInitialPot();
+        updateStateVariablesFornewRound();
+    }
+
+    /**
+     * @notice Sets the status of pause to true.
+     */
+    function pauseLuckyBilionaire() private {
+        _pause();
+    }
+
+    /**
+     * @notice Sets the status of pause to false.
+     */
+    function resumeLuckyBilionaire() private {
+        _unpause();
+    }
+
+    function StartNewRound() external onlyOwner {
+        pauseLuckyBilionaire();
+        announceLuckyNumber();
+        startNewRoundCleanUp();
+        resumeLuckyBilionaire();
+    }
+
+    function withdraw() external {}
 }
