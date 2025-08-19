@@ -81,6 +81,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     error LuckyBilionaire__NoFundsToWithdraw();
     error LuckyBilionaire_TransferFailed();
     error LuckyBilionaire__IncorrectPaymentValue();
+    error LuckyBilionaire__NeedsToBeMoreThanZero();
 
     /*//////////////////////////////////////////////////////////////
                                FUNCTIONS
@@ -92,12 +93,15 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
         s_round = 0;
     }
 
+    /*//////////////////////////////////////////////////////////////
+                           EXTERNAL FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
     /**
      * @notice Saves the player's guess and updates the total prize pot.
      * @notice Each bet costs BET_COST.
      * @param _guess The player's guess. A number within MINIMUM_LUCKY_NUMBER and MAXIMUM_LUCKY_NUMBER.
      */
-    function savePlayerGuess(uint256 _guess) public payable whenNotPaused {
+    function savePlayerGuess(uint256 _guess) external payable whenNotPaused {
         if (msg.value != 1 ether) {
             revert LuckyBilionaire__IncorrectPaymentValue();
         }
@@ -116,6 +120,63 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
         s_numberGuesses[s_round][_guess][msg.sender] += 1;
     }
 
+    /**
+     * @notice Announces a Lucky Number, distributes prizes and starts a new round.
+     * @notice Lucky Billionaire is paused between the announcement and the start of a new round.
+     */
+    function StartNewRound() external onlyOwner {
+        pauseLuckyBilionaire();
+        announceLuckyNumber();
+        startNewRoundCleanUp();
+        resumeLuckyBilionaire();
+    }
+
+    /**
+     * @notice Allows players to claim any prizes they've won within the last 28 days.
+     * @notice After 28 days the prize is redeemed as uncollected and reverts as house earnings.
+     */
+    function claimPrize() external nonReentrant {
+        uint256 amount = 0;
+        prize[] storage playerPrizes = s_pendingWithdrawals[msg.sender];
+
+        for (uint256 i = 0; i < playerPrizes.length; i++) {
+            if (block.timestamp - playerPrizes[i].dateWon <= 28 days) {
+                amount += playerPrizes[i].amountWon;
+                playerPrizes[i] = playerPrizes[playerPrizes.length - 1];
+                playerPrizes.pop();
+            }
+        }
+        if (amount == 0) {
+            revert LuckyBilionaire__NoFundsToWithdraw();
+        }
+
+        (bool success,) = msg.sender.call{value: amount}("");
+        if (!success) {
+            revert LuckyBilionaire_TransferFailed();
+        }
+    }
+
+    /**
+     * @notice Withdraw funds from the contract.
+     */
+    function withdraw(uint256 _amount) external onlyOwner {
+        if (_amount <= 0) {
+            revert LuckyBilionaire__NeedsToBeMoreThanZero();
+        }
+
+        if (_amount > s_vault) {
+            revert LuckyBilionaire__NoFundsToWithdraw();
+        }
+
+        (bool success,) = msg.sender.call{value: _amount}("");
+        if (!success) {
+            revert LuckyBilionaire_TransferFailed();
+        }
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                                INTERNAL
+    //////////////////////////////////////////////////////////////*/
     /**
      * @notice Requests a new set of random numbers from Chainlink VRF v2.5.
      * @dev The returned request ID can be used to track the fulfillment via 'fulfillRandomWords'.
@@ -142,7 +203,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
      *      The '_requestId' parameter is unused but required to match the VRF callback signature.
      * @param _randomWords The array of random numbers returned by the VRF Coordinator.
      */
-    function fulfillRandomWords(uint256, /*_requestId*/ uint256[] calldata _randomWords) internal override {
+    function fulfillRandomWords(uint256 /*_requestId*/, uint256[] calldata _randomWords) internal override {
         uint256 rawRandom = _randomWords[0];
         s_luckyNumber[s_round] = (rawRandom % MAXIMUM_LUCKY_NUMBER) + 1;
     }
@@ -150,7 +211,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     /**
      * @notice Calculates the amount of times the lucky number was guessed
      */
-    function timesTheLuckyNumberWasGuessed() private view returns (uint256 numberOfFirstPrizeWinners) {
+    function timesTheLuckyNumberWasGuessed() internal view returns (uint256 numberOfFirstPrizeWinners) {
         numberOfFirstPrizeWinners = 0;
         address[] memory firstPrizeWinners = s_playersByNumberGuess[s_round][s_luckyNumber[s_round]];
 
@@ -164,7 +225,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
      * @dev If the lucky number is on the lower or upper limit, the second prize loops around.
      * @dev Example: Lucky number = 50; Second prize numbers = 49 and 1.
      */
-    function timesTheLuckyNumberWasAlmostGuessed() private view returns (uint256 numberOfSecondPrizeWinners) {
+    function timesTheLuckyNumberWasAlmostGuessed() internal view returns (uint256 numberOfSecondPrizeWinners) {
         numberOfSecondPrizeWinners = 0;
         uint256 beforeLuckyNumber;
         uint256 afterLuckyNumber;
@@ -196,7 +257,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     /**
      * @notice Distributes the prizes to the winners so they're available for withdrawall.
      */
-    function distributeFirstPrize() private {
+    function distributeFirstPrize() internal {
         uint256 overallCorrectLuckyNumberGuesses = timesTheLuckyNumberWasGuessed();
         require(overallCorrectLuckyNumberGuesses > 0, "No first prize winners");
         uint256 individualPrizeParcel = s_firstPrize / overallCorrectLuckyNumberGuesses;
@@ -214,7 +275,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     /**
      * @notice Distributes the prizes to the second winners so they're available for withdrawall.
      */
-    function distributeSecondPrize() private {
+    function distributeSecondPrize() internal {
         uint256 overallAlmosLuckyNumberGuesses = timesTheLuckyNumberWasAlmostGuessed();
         require(overallAlmosLuckyNumberGuesses > 0, "No second prize winners");
         uint256 individualPrizeParcel = s_secondPrize / overallAlmosLuckyNumberGuesses;
@@ -230,35 +291,10 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @notice Allows players to claim any prizes they've won within the last 28 days.
-     * @notice After 28 days the prize is redeemed as uncollected and reverts as house earnings.
-     */
-    function claimPrize() external nonReentrant {
-        uint256 amount = 0;
-        prize[] storage playerPrizes = s_pendingWithdrawals[msg.sender];
-
-        for (uint256 i = 0; i < playerPrizes.length; i++) {
-            if (block.timestamp - playerPrizes[i].dateWon <= 28 days) {
-                amount += playerPrizes[i].amountWon;
-                playerPrizes[i] = playerPrizes[playerPrizes.length - 1];
-                playerPrizes.pop();
-            }
-        }
-        if (amount == 0) {
-            revert LuckyBilionaire__NoFundsToWithdraw();
-        }
-
-        (bool success,) = msg.sender.call{value: amount}("");
-        if (!success) {
-            revert LuckyBilionaire_TransferFailed();
-        }
-    }
-
-    /**
      * @notice Calculates new round's initial pot depending on last week's winners.
      * @notice In case of no winner and/or no second winner, the correspondent prize rolls to the new round.
      */
-    function calculateNewRoundInitialPot() private {
+    function calculateNewRoundInitialPot() internal {
         uint256 winnersShare = s_totalPot * FIRST_WIN_PERCENTAGE / 100;
         uint256 secondWinnersShare = s_totalPot * SECOND_WIN_PERCENTAGE / 100;
         uint256 beforeLuckyNumber;
@@ -305,7 +341,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
      * @notice Retreives unclaimed prizes.
      * @dev Prizes are deemed unclaimed if not withdrawn within 28 days.
      */
-    function retreiveUnclaimedPrizes() private {
+    function retreiveUnclaimedPrizes() internal {
         if (s_round > 4) {
             for (uint8 i = 4; i > 0; i--) {
                 uint256 round = s_round - i;
@@ -325,7 +361,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     /**
      * @notice Updates states variables for new round.
      */
-    function updateStateVariablesFornewRound() private {
+    function updateStateVariablesFornewRound() internal {
         s_round++;
         s_lastFirstPrize = s_firstPrize;
         s_lastSecondPrize = s_secondPrize;
@@ -336,7 +372,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     /**
      * @notice Requests a random number from VRF Chainlink and then distributes prizes accordingly.
      */
-    function announceLuckyNumber() private {
+    function announceLuckyNumber() internal {
         requestRandomNumber();
         distributeFirstPrize();
         distributeSecondPrize();
@@ -347,7 +383,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
      * @notice Calculates new round's initial pot depending on last round's result.
      * @notice Updates the relevant state variables for new round.
      */
-    function startNewRoundCleanUp() private {
+    function startNewRoundCleanUp() internal {
         retreiveUnclaimedPrizes();
         calculateNewRoundInitialPot();
         updateStateVariablesFornewRound();
@@ -356,23 +392,14 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     /**
      * @notice Sets the status of pause to true.
      */
-    function pauseLuckyBilionaire() private {
+    function pauseLuckyBilionaire() internal {
         _pause();
     }
 
     /**
      * @notice Sets the status of pause to false.
      */
-    function resumeLuckyBilionaire() private {
+    function resumeLuckyBilionaire() internal {
         _unpause();
     }
-
-    function StartNewRound() external onlyOwner {
-        pauseLuckyBilionaire();
-        announceLuckyNumber();
-        startNewRoundCleanUp();
-        resumeLuckyBilionaire();
-    }
-
-    function withdraw() external {}
 }
