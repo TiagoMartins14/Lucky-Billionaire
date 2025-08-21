@@ -47,8 +47,8 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     uint8 public constant FIRST_WIN_PERCENTAGE = 80; // 80%
     uint8 public constant SECOND_WIN_PERCENTAGE = 20; // 15%
     uint256 public constant BET_COST = 1 ether;
-    uint8 private MINIMUM_LUCKY_NUMBER = 1;
-    uint8 private MAXIMUM_LUCKY_NUMBER = 50;
+    uint8 private constant MINIMUM_LUCKY_NUMBER = 1;
+    uint8 private constant MAXIMUM_LUCKY_NUMBER = 50;
     uint16 private constant REQUEST_CONFIRMATIONS = 100;
     uint32 private constant CALLBACK_GAS_LIMIT = 150000;
     uint32 private constant NUM_WORDS = 1;
@@ -79,7 +79,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     //////////////////////////////////////////////////////////////*/
     error LuckyBilionaire__GuessOutOfRange();
     error LuckyBilionaire__NoFundsToWithdraw();
-    error LuckyBilionaire_TransferFailed();
+    error LuckyBilionaire__TransferFailed();
     error LuckyBilionaire__IncorrectPaymentValue();
     error LuckyBilionaire__NeedsToBeMoreThanZero();
 
@@ -152,7 +152,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
 
         (bool success,) = msg.sender.call{value: amount}("");
         if (!success) {
-            revert LuckyBilionaire_TransferFailed();
+            revert LuckyBilionaire__TransferFailed();
         }
     }
 
@@ -170,7 +170,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
 
         (bool success,) = msg.sender.call{value: _amount}("");
         if (!success) {
-            revert LuckyBilionaire_TransferFailed();
+            revert LuckyBilionaire__TransferFailed();
         }
     }
 
