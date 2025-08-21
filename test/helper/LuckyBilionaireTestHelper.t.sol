@@ -4,9 +4,10 @@ pragma solidity ^0.8.19;
 import {LuckyBilionaire} from "src/LuckyBilionaire.sol";
 
 contract LuckyBilionaireTestHelper is LuckyBilionaire {
-    uint8 public constant EXPOSED_HOUSE_COMISSION = 5; // 5%
-    uint8 public EXPOSED_MINIMUM_LUCKY_NUMBER = 1;
-    uint8 public EXPOSED_MAXIMUM_LUCKY_NUMBER = 50;
+    uint256 public constant EXPOSED_HOUSE_COMISSION = 5; // 5%
+    uint256 public constant EXPOSED_MINIMUM_LUCKY_NUMBER = 1;
+    uint256 public constant EXPOSED_MAXIMUM_LUCKY_NUMBER = 50;
+    uint256 public constant EXPOSED_VAULT_CUT = (BET_COST * EXPOSED_HOUSE_COMISSION) / 100;
 
     constructor(address _vrfCoordinator, bytes32 _keyHash, uint256 _subId)
         LuckyBilionaire(_vrfCoordinator, _keyHash, _subId)
@@ -62,6 +63,18 @@ contract LuckyBilionaireTestHelper is LuckyBilionaire {
 
     function exposedResumeLuckyBilionaire() external {
         resumeLuckyBilionaire();
+    }
+
+    function setLuckyNumber(uint256 _round, uint256 _luckyNumber) external {
+        s_luckyNumber[_round] = _luckyNumber;
+    }
+
+    function setFirstPrize(uint256 _prize) external {
+        s_firstPrize = _prize;
+    }
+
+    function setSecondPrize(uint256 _prize) external {
+        s_secondPrize = _prize;
     }
 }
 
