@@ -16,27 +16,33 @@ contract LuckyBilionaireTest is Test {
         subId = vrfCoordinator.createSubscription();
         luckyBilionaire = new LuckyBilionaireTestHelper(address(vrfCoordinator), KEY_HASH, subId);
 
-        vrfCoordinator.fundSubscription(subId, 2 ether);
+        vrfCoordinator.fundSubscription(subId, 10000 ether);
         vrfCoordinator.addConsumer(subId, address(luckyBilionaire));
     }
 
-    function test_RequestAndFulfill() public {
-        // Call the exposed internal that requests randomness
-        uint256 reqId = luckyBilionaire.exposedRequestRandomNumber();
+    function testRequestRandomNUmber() public {
+        for (uint256 i = 0; i < 1000; i++) {
+            uint256 reqId = luckyBilionaire.exposedRequestRandomNumber();
 
-        // Let the mock coordinator call back into your contract
-        vrfCoordinator.fulfillRandomWords(reqId, address(luckyBilionaire));
+            vrfCoordinator.fulfillRandomWords(reqId, address(luckyBilionaire));
 
-        uint256 round = luckyBilionaire.s_round();
-        uint256 num = luckyBilionaire.s_luckyNumber(round);
-        assertGt(num, 0);
-        assertLe(num, luckyBilionaire.EXPOSED_MAXIMUM_LUCKY_NUMBER());
+            uint256 round = luckyBilionaire.s_round();
+            uint256 num = luckyBilionaire.s_luckyNumber(round);
+
+            assertGt(num, 0);
+            assertLe(num, luckyBilionaire.EXPOSED_MAXIMUM_LUCKY_NUMBER());
+        }
     }
 
-    function testRequestRandomNUmber() public {
-        luckyBilionaire.exposedRequestRandomNumber();
-        assertGt(luckyBilionaire.s_luckyNumber[luckyBilionaire.s_round], 0, "Lucky number should be greater than zero");
-        assertLt(luckyBilionaire.s_luckyNumber[luckyBilionaire.s_round], 51, "Lucky number should be lower than 51");
+    function testSavingGuess(uint256 guess) public {
+        guess = bound(guess, luckyBilionaire.EXPOSED_MINIMUM_LUCKY_NUMBER(), luckyBilionaire.EXPOSED_MAXIMUM_LUCKY_NUMBER());
+        uint256 round = luckyBilionaire.s_round();
+        address player = makeAddr("player");
+        vm.deal(player, 1 ether);
+        vm.prank(player);
+        luckyBilionaire.savePlayerGuess{value: 1 ether}(guess);
+
+        assertEq(luckyBilionaire.s_playersByNumberGuess(round, guess, 0), player);
     }
 }
 
