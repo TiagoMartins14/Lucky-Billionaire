@@ -113,6 +113,8 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
 
         s_vault += VAULT_CUT;
         s_totalPot += BET_COST - VAULT_CUT;
+        s_firstPrize += BET_COST * FIRST_WIN_PERCENTAGE / 100;
+        s_secondPrize += BET_COST * SECOND_WIN_PERCENTAGE / 100;
 
         if (s_numberGuesses[s_round][_guess][msg.sender] == 0) {
             s_playersByNumberGuess[s_round][_guess].push(msg.sender);
@@ -213,11 +215,11 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
      * @notice Calculates the amount of times the lucky number was guessed
      */
     function timesTheLuckyNumberWasGuessed() internal view returns (uint256 numberOfFirstPrizeWinners) {
-        numberOfFirstPrizeWinners = 0;
-        address[] memory firstPrizeWinners = s_playersByNumberGuess[s_round][s_luckyNumber[s_round]];
+        uint256 luckyNumber = s_luckyNumber[s_round];
+        address[] memory firstPrizeWinners = s_playersByNumberGuess[s_round][luckyNumber];
 
-        for (uint8 i = 0; i < firstPrizeWinners.length; i++) {
-            numberOfFirstPrizeWinners += s_numberGuesses[s_round][s_luckyNumber[s_round]][firstPrizeWinners[i]];
+        for (uint256 i = 0; i < firstPrizeWinners.length; i++) {
+            numberOfFirstPrizeWinners += s_numberGuesses[s_round][luckyNumber][firstPrizeWinners[i]];
         }
     }
 
@@ -260,7 +262,10 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
      */
     function distributeFirstPrize() internal {
         uint256 overallCorrectLuckyNumberGuesses = timesTheLuckyNumberWasGuessed();
-        require(overallCorrectLuckyNumberGuesses > 0, "No first prize winners");
+        if (overallCorrectLuckyNumberGuesses == 0) {
+            return;
+        }
+
         uint256 individualPrizeParcel = s_firstPrize / overallCorrectLuckyNumberGuesses;
         address[] memory firstPrizeWinners = s_playersByNumberGuess[s_round][s_luckyNumber[s_round]];
 
@@ -278,7 +283,10 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
      */
     function distributeSecondPrize() internal {
         uint256 overallAlmosLuckyNumberGuesses = timesTheLuckyNumberWasAlmostGuessed();
-        require(overallAlmosLuckyNumberGuesses > 0, "No second prize winners");
+        if (overallAlmosLuckyNumberGuesses == 0) {
+            return;
+        }
+
         uint256 individualPrizeParcel = s_secondPrize / overallAlmosLuckyNumberGuesses;
         uint256 beforeLuckyNumber;
         uint256 afterLuckyNumber;
