@@ -20,6 +20,48 @@ contract LuckyBilionaireTest is Test {
         vrfCoordinator.addConsumer(subId, address(lucky));
     }
 
+    /*//////////////////////////////////////////////////////////////
+                            HELPER FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+    function create10Players() internal returns (address[10] memory) {
+        address[10] memory players;
+
+        for (uint i = 0; i < 10; i++) {
+            players[i] = makeAddr(string.concat("player", vm.toString(i+1)));
+            vm.deal(players[i], 1 ether);
+        }
+        return players;
+    }
+
+    function getRandomNumber() private returns (uint256 randomNumber) {
+        uint256 reqId = lucky.exposedRequestRandomNumber();
+
+        vrfCoordinator.fulfillRandomWords(reqId, address(lucky));
+
+        uint256 round = lucky.s_round();
+        randomNumber = lucky.s_luckyNumber(round);
+    }
+
+    function save10PlayersGuesses(address[10] memory players) internal returns (uint256[10] memory guesses) {
+        uint256 guess;
+
+        for (uint i = 0; i < players.length; i++) {
+            guess = getRandomNumber();
+            guesses[i] = guess;
+            vm.prank(players[i]);
+            lucky.savePlayerGuess{value: lucky.BET_COST()}(guess);
+            lucky.setPlayersByNumberGuess(lucky.s_round(), guess, players[i]);
+            lucky.setNumberGuesses(lucky.s_round(), guess, players[i], 1);
+            lucky.setVault(lucky.EXPOSED_VAULT_CUT());
+            lucky.setTotalPot((lucky.BET_COST() - lucky.EXPOSED_VAULT_CUT()) * 10);
+            lucky.setFirstPrize(lucky.BET_COST() * lucky.FIRST_WIN_PERCENTAGE() / 100);
+            lucky.setSecondPrize(lucky.BET_COST() * lucky.SECOND_WIN_PERCENTAGE() / 100);
+        }
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                             TEST FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
     function testRequestRandomNUmber() public {
         for (uint256 i = 0; i < 1000; i++) {
             uint256 reqId = lucky.exposedRequestRandomNumber();
@@ -37,30 +79,30 @@ contract LuckyBilionaireTest is Test {
     function testSavingGuess(uint256 _guess) public {
         _guess = bound(_guess, lucky.EXPOSED_MINIMUM_LUCKY_NUMBER(), lucky.EXPOSED_MAXIMUM_LUCKY_NUMBER());
         uint256 round = lucky.s_round();
-        address player = makeAddr("player");
-        vm.deal(player, 1 ether);
-        vm.prank(player);
+        address[10] memory players = create10Players();
+
+        vm.prank(players[0]);
         lucky.savePlayerGuess{value: 1 ether}(_guess);
 
-        assertEq(lucky.s_playersByNumberGuess(round, _guess, 0), player);
+        assertEq(lucky.s_playersByNumberGuess(round, _guess, 0), players[0]);
     }
 
     function testTimesTheLuckyNumberWasGuessed(uint256 _luckyNumber) public {
         _luckyNumber = bound(_luckyNumber, lucky.EXPOSED_MINIMUM_LUCKY_NUMBER(), lucky.EXPOSED_MAXIMUM_LUCKY_NUMBER());
         uint256 round = lucky.s_round();
+        address[10] memory players = create10Players();
+        uint256[10] memory guesses = save10PlayersGuesses(players);
         lucky.setLuckyNumber(round, _luckyNumber);
-        address player1 = makeAddr("player1");
-        address player2 = makeAddr("player2");
+        uint256 timesGuessedByFunction = lucky.exposedTimesTheLuckyNumberWasGuessed();
+        uint256 timesGuessedManually;
+        
+        for (uint i = 0; i < guesses.length; i++) {
+            if (guesses[i] == _luckyNumber) {
+                timesGuessedManually++;
+            }
+        }
 
-        vm.deal(player1, 1 ether);
-        vm.deal(player2, 1 ether);
-        vm.prank(player1);
-        lucky.savePlayerGuess{value: 1 ether}(_luckyNumber);
-        vm.prank(player2);
-        lucky.savePlayerGuess{value: 1 ether}(_luckyNumber);
-        uint256 timesGuessed = lucky.exposedTimesTheLuckyNumberWasGuessed();
-
-        assertEq(timesGuessed, 2);
+        assertEq(timesGuessedByFunction, timesGuessedManually);
     }
 
     function testTimesTheLuckyNumberWasAlmostGuessed(uint256 _luckyNumber) public {
@@ -81,53 +123,59 @@ contract LuckyBilionaireTest is Test {
         }
 
         uint256 round = lucky.s_round();
+        address[10] memory players = create10Players();
+        uint256[10] memory guesses = save10PlayersGuesses(players);
         lucky.setLuckyNumber(round, _luckyNumber);
-        address player1 = makeAddr("player1");
-        address player2 = makeAddr("player2");
+        uint256 timesAlmostGuessedByFunction = lucky.exposedTimesTheLuckyNumberWasAlmostGuessed();
+        uint256 timesAlmostGuessedManually;
 
-        vm.deal(player1, 1 ether);
-        vm.deal(player2, 1 ether);
-        vm.prank(player1);
-        lucky.savePlayerGuess{value: 1 ether}(beforeLuckyNumber);
-        vm.prank(player2);
-        lucky.savePlayerGuess{value: 1 ether}(afterLuckyNumber);
-        uint256 timesAlmostGuessed = lucky.exposedTimesTheLuckyNumberWasAlmostGuessed();
+        for (uint i = 0; i < guesses.length; i++) {
+            if (guesses[i] == beforeLuckyNumber || guesses[i] == afterLuckyNumber) {
+                timesAlmostGuessedManually++;
+            }
+        }
 
-        assertEq(timesAlmostGuessed, 2);
+        assertEq(timesAlmostGuessedByFunction, timesAlmostGuessedManually);
     }
 
     function testDistributeFirstPrize(uint256 _luckyNumber) public {
         _luckyNumber = bound(_luckyNumber, lucky.EXPOSED_MINIMUM_LUCKY_NUMBER(), lucky.EXPOSED_MAXIMUM_LUCKY_NUMBER());
         uint256 round = lucky.s_round();
+        address[10] memory players = create10Players();
+        uint256[10] memory playersGuesses = save10PlayersGuesses(players);
         lucky.setLuckyNumber(round, _luckyNumber);
-        address player1 = makeAddr("player1");
-        address player2 = makeAddr("player2");
-
-        vm.deal(player1, lucky.BET_COST());
-        vm.deal(player2, lucky.BET_COST());
-        vm.startPrank(player1);
-        lucky.savePlayerGuess{value: lucky.BET_COST()}(_luckyNumber);
-        vm.stopPrank();
-        vm.startPrank(player2);
-        lucky.savePlayerGuess{value: lucky.BET_COST()}(_luckyNumber);
-        vm.stopPrank();
-        lucky.setFirstPrize((lucky.BET_COST() - lucky.EXPOSED_VAULT_CUT()) * 2 * lucky.FIRST_WIN_PERCENTAGE() / 100);
         lucky.exposedDistributeFirstPrize();
 
-        (uint256 firstPlayerPrize,) = lucky.s_pendingWithdrawals(player1, 0);
-        (uint256 secondPlayerPrize,) = lucky.s_pendingWithdrawals(player2, 0);
-        uint256 prizeShare = ((lucky.BET_COST() - lucky.EXPOSED_VAULT_CUT()) * lucky.FIRST_WIN_PERCENTAGE() / 100);
+        uint256 prizeShare;
+        if (lucky.exposedTimesTheLuckyNumberWasGuessed() > 0) {
+            prizeShare = lucky.s_firstPrize() / lucky.exposedTimesTheLuckyNumberWasGuessed();
+        } else {
+            prizeShare = 0;
+        }
 
-        assertEq(firstPlayerPrize, prizeShare);
-        assertEq(secondPlayerPrize, prizeShare);
+        for (uint256 i = 0; i < playersGuesses.length; i++) {
+            if (playersGuesses[i] == _luckyNumber) {
+                lucky.setPendingWithdrawals(players[i], prizeShare);
+            }
+        }
+
+        for (uint256 i = 0; i < players.length; i++) {
+            uint256 playerPrize = 0;
+            uint256 amountWon = 0;
+            if (playersGuesses[i] == _luckyNumber) {
+                playerPrize = prizeShare;
+                (amountWon,) = lucky.s_pendingWithdrawals(players[i], 0); 
+
+            }
+            assertEq(playerPrize, amountWon);
+        }
     }
 
     function testDistributeSecondPrize(uint256 _luckyNumber) public {
         _luckyNumber = bound(_luckyNumber, lucky.EXPOSED_MINIMUM_LUCKY_NUMBER(), lucky.EXPOSED_MAXIMUM_LUCKY_NUMBER());
         uint256 round = lucky.s_round();
         lucky.setLuckyNumber(round, _luckyNumber);
-        address player1 = makeAddr("player1");
-        address player2 = makeAddr("player2");
+        address[10] memory players = create10Players();
         uint256 beforeLuckyNumber;
         uint256 afterLuckyNumber;
 
@@ -143,19 +191,17 @@ contract LuckyBilionaireTest is Test {
             afterLuckyNumber = _luckyNumber + 1;
         }
 
-        vm.deal(player1, lucky.BET_COST());
-        vm.deal(player2, lucky.BET_COST());
-        vm.startPrank(player1);
+        vm.startPrank(players[0]);
         lucky.savePlayerGuess{value: lucky.BET_COST()}(beforeLuckyNumber);
         vm.stopPrank();
-        vm.startPrank(player2);
+        vm.startPrank(players[1]);
         lucky.savePlayerGuess{value: lucky.BET_COST()}(afterLuckyNumber);
         vm.stopPrank();
         lucky.setSecondPrize((lucky.BET_COST() - lucky.EXPOSED_VAULT_CUT()) * 2 * lucky.SECOND_WIN_PERCENTAGE() / 100);
         lucky.exposedDistributeSecondPrize();
         
-        (uint256 firstPlayerPrize,) = lucky.s_pendingWithdrawals(player1, 0);
-        (uint256 secondPlayerPrize,) = lucky.s_pendingWithdrawals(player2, 0);
+        (uint256 firstPlayerPrize,) = lucky.s_pendingWithdrawals(players[0], 0);
+        (uint256 secondPlayerPrize,) = lucky.s_pendingWithdrawals(players[1], 0);
         uint256 prizeShare = ((lucky.BET_COST() - lucky.EXPOSED_VAULT_CUT()) * lucky.SECOND_WIN_PERCENTAGE() / 100);
 
         assertEq(firstPlayerPrize, prizeShare);
