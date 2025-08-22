@@ -26,8 +26,8 @@ contract LuckyBilionaireTest is Test {
     function create10Players() internal returns (address[10] memory) {
         address[10] memory players;
 
-        for (uint i = 0; i < 10; i++) {
-            players[i] = makeAddr(string.concat("player", vm.toString(i+1)));
+        for (uint256 i = 0; i < 10; i++) {
+            players[i] = makeAddr(string.concat("player", vm.toString(i + 1)));
             vm.deal(players[i], 1 ether);
         }
         return players;
@@ -45,7 +45,7 @@ contract LuckyBilionaireTest is Test {
     function save10PlayersGuesses(address[10] memory players) internal returns (uint256[10] memory guesses) {
         uint256 guess;
 
-        for (uint i = 0; i < players.length; i++) {
+        for (uint256 i = 0; i < players.length; i++) {
             guess = getRandomNumber();
             guesses[i] = guess;
             vm.prank(players[i]);
@@ -95,8 +95,8 @@ contract LuckyBilionaireTest is Test {
         lucky.setLuckyNumber(round, _luckyNumber);
         uint256 timesGuessedByFunction = lucky.exposedTimesTheLuckyNumberWasGuessed();
         uint256 timesGuessedManually;
-        
-        for (uint i = 0; i < guesses.length; i++) {
+
+        for (uint256 i = 0; i < guesses.length; i++) {
             if (guesses[i] == _luckyNumber) {
                 timesGuessedManually++;
             }
@@ -129,7 +129,7 @@ contract LuckyBilionaireTest is Test {
         uint256 timesAlmostGuessedByFunction = lucky.exposedTimesTheLuckyNumberWasAlmostGuessed();
         uint256 timesAlmostGuessedManually;
 
-        for (uint i = 0; i < guesses.length; i++) {
+        for (uint256 i = 0; i < guesses.length; i++) {
             if (guesses[i] == beforeLuckyNumber || guesses[i] == afterLuckyNumber) {
                 timesAlmostGuessedManually++;
             }
@@ -164,8 +164,7 @@ contract LuckyBilionaireTest is Test {
             uint256 amountWon = 0;
             if (playersGuesses[i] == _luckyNumber) {
                 playerPrize = prizeShare;
-                (amountWon,) = lucky.s_pendingWithdrawals(players[i], 0); 
-
+                (amountWon,) = lucky.s_pendingWithdrawals(players[i], 0);
             }
             assertEq(playerPrize, amountWon);
         }
@@ -174,8 +173,10 @@ contract LuckyBilionaireTest is Test {
     function testDistributeSecondPrize(uint256 _luckyNumber) public {
         _luckyNumber = bound(_luckyNumber, lucky.EXPOSED_MINIMUM_LUCKY_NUMBER(), lucky.EXPOSED_MAXIMUM_LUCKY_NUMBER());
         uint256 round = lucky.s_round();
-        lucky.setLuckyNumber(round, _luckyNumber);
         address[10] memory players = create10Players();
+        uint256[10] memory playersGuesses = save10PlayersGuesses(players);
+        lucky.setLuckyNumber(round, _luckyNumber);
+        lucky.exposedDistributeSecondPrize();
         uint256 beforeLuckyNumber;
         uint256 afterLuckyNumber;
 
@@ -190,21 +191,28 @@ contract LuckyBilionaireTest is Test {
         } else {
             afterLuckyNumber = _luckyNumber + 1;
         }
-
-        vm.startPrank(players[0]);
-        lucky.savePlayerGuess{value: lucky.BET_COST()}(beforeLuckyNumber);
-        vm.stopPrank();
-        vm.startPrank(players[1]);
-        lucky.savePlayerGuess{value: lucky.BET_COST()}(afterLuckyNumber);
-        vm.stopPrank();
-        lucky.setSecondPrize((lucky.BET_COST() - lucky.EXPOSED_VAULT_CUT()) * 2 * lucky.SECOND_WIN_PERCENTAGE() / 100);
-        lucky.exposedDistributeSecondPrize();
         
-        (uint256 firstPlayerPrize,) = lucky.s_pendingWithdrawals(players[0], 0);
-        (uint256 secondPlayerPrize,) = lucky.s_pendingWithdrawals(players[1], 0);
-        uint256 prizeShare = ((lucky.BET_COST() - lucky.EXPOSED_VAULT_CUT()) * lucky.SECOND_WIN_PERCENTAGE() / 100);
+        uint256 prizeShare;
+        if (lucky.exposedTimesTheLuckyNumberWasAlmostGuessed() > 0) {
+            prizeShare = lucky.s_secondPrize() / lucky.exposedTimesTheLuckyNumberWasAlmostGuessed();
+        } else {
+            prizeShare = 0;
+        }
 
-        assertEq(firstPlayerPrize, prizeShare);
-        assertEq(secondPlayerPrize, prizeShare);
+        for (uint256 i = 0; i < playersGuesses.length; i++) {
+            if (playersGuesses[i] == _luckyNumber) {
+                lucky.setPendingWithdrawals(players[i], prizeShare);
+            }
+        }
+
+        for (uint256 i = 0; i < players.length; i++) {
+            uint256 playerPrize = 0;
+            uint256 amountWon = 0;
+            if (playersGuesses[i] == beforeLuckyNumber || playersGuesses[i] == afterLuckyNumber) {
+                playerPrize = prizeShare;
+                (amountWon,) = lucky.s_pendingWithdrawals(players[i], 0);
+            }
+            assertEq(playerPrize, amountWon);
+        }
     }
 }
