@@ -113,8 +113,8 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
 
         s_vault += VAULT_CUT;
         s_totalPot += BET_COST - VAULT_CUT;
-        s_firstPrize += BET_COST * FIRST_WIN_PERCENTAGE / 100;
-        s_secondPrize += BET_COST * SECOND_WIN_PERCENTAGE / 100;
+        s_firstPrize += (BET_COST - VAULT_CUT) * FIRST_WIN_PERCENTAGE / 100;
+        s_secondPrize += (BET_COST - VAULT_CUT) * SECOND_WIN_PERCENTAGE / 100;
 
         if (s_numberGuesses[s_round][_guess][msg.sender] == 0) {
             s_playersByNumberGuess[s_round][_guess].push(msg.sender);
@@ -248,17 +248,17 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
         address[] memory secondPrizeWinnersBeforeNumber = s_playersByNumberGuess[s_round][beforeLuckyNumber];
         address[] memory secondPrizeWinnersAfterNumber = s_playersByNumberGuess[s_round][afterLuckyNumber];
 
-        for (uint8 i = 0; i < secondPrizeWinnersBeforeNumber.length; i++) {
+        for (uint256 i = 0; i < secondPrizeWinnersBeforeNumber.length; i++) {
             numberOfSecondPrizeWinners += s_numberGuesses[s_round][beforeLuckyNumber][secondPrizeWinnersBeforeNumber[i]];
         }
 
-        for (uint8 i = 0; i < secondPrizeWinnersAfterNumber.length; i++) {
+        for (uint256 i = 0; i < secondPrizeWinnersAfterNumber.length; i++) {
             numberOfSecondPrizeWinners += s_numberGuesses[s_round][afterLuckyNumber][secondPrizeWinnersAfterNumber[i]];
         }
     }
 
     /**
-     * @notice Distributes the prizes to the winners so they're available for withdrawall.
+     * @notice Distributes the prizes to the winners so they're available for withdrawal.
      */
     function distributeFirstPrize() internal {
         uint256 overallCorrectLuckyNumberGuesses = timesTheLuckyNumberWasGuessed();
@@ -279,7 +279,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @notice Distributes the prizes to the second winners so they're available for withdrawall.
+     * @notice Distributes the prizes to the second winners so they're available for withdrawal.
      */
     function distributeSecondPrize() internal {
         uint256 overallAlmosLuckyNumberGuesses = timesTheLuckyNumberWasAlmostGuessed();
@@ -305,16 +305,18 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
         address[] memory secondPrizeWinnersBeforeNumber = s_playersByNumberGuess[s_round][beforeLuckyNumber];
         address[] memory secondPrizeWinnersAfterNumber = s_playersByNumberGuess[s_round][afterLuckyNumber];
 
-        for (uint8 i = 0; i < secondPrizeWinnersBeforeNumber.length; i++) {
-            uint256 timesGuessedBeforeNumber = s_numberGuesses[s_round][beforeLuckyNumber][secondPrizeWinnersBeforeNumber[i]];
+        for (uint256 i = 0; i < secondPrizeWinnersBeforeNumber.length; i++) {
+            uint256 timesGuessedBeforeNumber =
+                s_numberGuesses[s_round][beforeLuckyNumber][secondPrizeWinnersBeforeNumber[i]];
             prize memory winnerPrize;
             winnerPrize.amountWon = individualPrizeParcel * timesGuessedBeforeNumber;
             winnerPrize.dateWon = block.timestamp;
             s_pendingWithdrawals[secondPrizeWinnersBeforeNumber[i]].push(winnerPrize);
         }
 
-        for (uint8 i = 0; i < secondPrizeWinnersAfterNumber.length; i++) {
-            uint256 timesGuessedBeforeNumber = s_numberGuesses[s_round][afterLuckyNumber][secondPrizeWinnersAfterNumber[i]];
+        for (uint256 i = 0; i < secondPrizeWinnersAfterNumber.length; i++) {
+            uint256 timesGuessedBeforeNumber =
+                s_numberGuesses[s_round][afterLuckyNumber][secondPrizeWinnersAfterNumber[i]];
             prize memory winnerPrize;
             winnerPrize.amountWon = individualPrizeParcel * timesGuessedBeforeNumber;
             winnerPrize.dateWon = block.timestamp;
@@ -327,8 +329,8 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
      * @notice In case of no winner and/or no second winner, the correspondent prize rolls to the new round.
      */
     function calculateNewRoundInitialPot() internal {
-        uint256 winnersShare = s_totalPot * FIRST_WIN_PERCENTAGE / 100;
-        uint256 secondWinnersShare = s_totalPot * SECOND_WIN_PERCENTAGE / 100;
+        // uint256 winnersShare = s_totalPot * FIRST_WIN_PERCENTAGE / 100;
+        // uint256 secondWinnersShare = s_totalPot * SECOND_WIN_PERCENTAGE / 100;
         uint256 beforeLuckyNumber;
         uint256 afterLuckyNumber;
 
@@ -357,7 +359,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
                 && s_playersByNumberGuess[s_round][beforeLuckyNumber].length == 0
                 && s_playersByNumberGuess[s_round][afterLuckyNumber].length == 0
         ) {
-            s_totalPot = secondWinnersShare;
+            s_totalPot = s_secondPrize;
         } else if (
             s_playersByNumberGuess[s_round][s_luckyNumber[s_round]].length == 0
                 && (
@@ -365,7 +367,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
                         || s_playersByNumberGuess[s_round][afterLuckyNumber].length > 0
                 )
         ) {
-            s_totalPot = winnersShare;
+            s_totalPot = s_firstPrize;
         }
     }
 
