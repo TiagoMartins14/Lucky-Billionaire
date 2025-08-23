@@ -50,12 +50,6 @@ contract LuckyBilionaireTest is Test {
             guesses[i] = guess;
             vm.prank(players[i]);
             lucky.savePlayerGuess{value: lucky.BET_COST()}(guess);
-            lucky.setPlayersByNumberGuess(lucky.s_round(), guess, players[i]);
-            lucky.setNumberGuesses(lucky.s_round(), guess, players[i], 1);
-            lucky.setVault(lucky.EXPOSED_VAULT_CUT());
-            lucky.setTotalPot((lucky.BET_COST() - lucky.EXPOSED_VAULT_CUT()) * 10);
-            lucky.setFirstPrize(lucky.BET_COST() * lucky.FIRST_WIN_PERCENTAGE() / 100);
-            lucky.setSecondPrize(lucky.BET_COST() * lucky.SECOND_WIN_PERCENTAGE() / 100);
         }
     }
 
@@ -94,7 +88,7 @@ contract LuckyBilionaireTest is Test {
         uint256[10] memory guesses = save10PlayersGuesses(players);
         lucky.setLuckyNumber(round, _luckyNumber);
         uint256 timesGuessedByFunction = lucky.exposedTimesTheLuckyNumberWasGuessed();
-        uint256 timesGuessedManually;
+        uint256 timesGuessedManually = 0;
 
         for (uint256 i = 0; i < guesses.length; i++) {
             if (guesses[i] == _luckyNumber) {
@@ -142,31 +136,27 @@ contract LuckyBilionaireTest is Test {
         _luckyNumber = bound(_luckyNumber, lucky.EXPOSED_MINIMUM_LUCKY_NUMBER(), lucky.EXPOSED_MAXIMUM_LUCKY_NUMBER());
         uint256 round = lucky.s_round();
         address[10] memory players = create10Players();
-        uint256[10] memory playersGuesses = save10PlayersGuesses(players);
+        save10PlayersGuesses(players);
         lucky.setLuckyNumber(round, _luckyNumber);
         lucky.exposedDistributeFirstPrize();
 
-        uint256 prizeShare;
-        if (lucky.exposedTimesTheLuckyNumberWasGuessed() > 0) {
-            prizeShare = lucky.s_firstPrize() / lucky.exposedTimesTheLuckyNumberWasGuessed();
-        } else {
-            prizeShare = 0;
-        }
-
-        for (uint256 i = 0; i < playersGuesses.length; i++) {
-            if (playersGuesses[i] == _luckyNumber) {
-                lucky.setPendingWithdrawals(players[i], prizeShare);
-            }
+        uint256 timesGuessedCorrectly = lucky.exposedTimesTheLuckyNumberWasGuessed();
+        uint256 prizeShare = 0;
+        if (timesGuessedCorrectly > 0) {
+            prizeShare = lucky.s_firstPrize() / timesGuessedCorrectly;
         }
 
         for (uint256 i = 0; i < players.length; i++) {
-            uint256 playerPrize = 0;
+            uint256 expectedPlayerPrize = 0;
             uint256 amountWon = 0;
-            if (playersGuesses[i] == _luckyNumber) {
-                playerPrize = prizeShare;
+            uint256 timesPlayerGuessed = lucky.s_numberGuesses(round, _luckyNumber, players[i]);
+
+            if (timesPlayerGuessed > 0) {
+                expectedPlayerPrize = prizeShare * timesPlayerGuessed;
                 (amountWon,) = lucky.s_pendingWithdrawals(players[i], 0);
             }
-            assertEq(playerPrize, amountWon);
+
+            assertEq(expectedPlayerPrize, amountWon);
         }
     }
 
@@ -174,9 +164,10 @@ contract LuckyBilionaireTest is Test {
         _luckyNumber = bound(_luckyNumber, lucky.EXPOSED_MINIMUM_LUCKY_NUMBER(), lucky.EXPOSED_MAXIMUM_LUCKY_NUMBER());
         uint256 round = lucky.s_round();
         address[10] memory players = create10Players();
-        uint256[10] memory playersGuesses = save10PlayersGuesses(players);
+        save10PlayersGuesses(players);
         lucky.setLuckyNumber(round, _luckyNumber);
         lucky.exposedDistributeSecondPrize();
+
         uint256 beforeLuckyNumber;
         uint256 afterLuckyNumber;
 
@@ -191,28 +182,55 @@ contract LuckyBilionaireTest is Test {
         } else {
             afterLuckyNumber = _luckyNumber + 1;
         }
-        
-        uint256 prizeShare;
-        if (lucky.exposedTimesTheLuckyNumberWasAlmostGuessed() > 0) {
-            prizeShare = lucky.s_secondPrize() / lucky.exposedTimesTheLuckyNumberWasAlmostGuessed();
-        } else {
-            prizeShare = 0;
-        }
 
-        for (uint256 i = 0; i < playersGuesses.length; i++) {
-            if (playersGuesses[i] == _luckyNumber) {
-                lucky.setPendingWithdrawals(players[i], prizeShare);
-            }
+        uint256 timesGuessedAlmost = lucky.exposedTimesTheLuckyNumberWasAlmostGuessed();
+        uint256 prizeShare = 0;
+        if (timesGuessedAlmost > 0) {
+            prizeShare = lucky.s_secondPrize() / timesGuessedAlmost;
         }
 
         for (uint256 i = 0; i < players.length; i++) {
-            uint256 playerPrize = 0;
+            uint256 expectedPlayerPrize = 0;
             uint256 amountWon = 0;
-            if (playersGuesses[i] == beforeLuckyNumber || playersGuesses[i] == afterLuckyNumber) {
-                playerPrize = prizeShare;
+
+            uint256 timesGuessedBefore = lucky.s_numberGuesses(round, beforeLuckyNumber, players[i]);
+            uint256 timesGuessedAfter = lucky.s_numberGuesses(round, afterLuckyNumber, players[i]);
+            uint256 totalAlmostGuesses = timesGuessedBefore + timesGuessedAfter;
+
+            if (totalAlmostGuesses > 0) {
+                expectedPlayerPrize = prizeShare * totalAlmostGuesses;
                 (amountWon,) = lucky.s_pendingWithdrawals(players[i], 0);
             }
-            assertEq(playerPrize, amountWon);
+
+            assertEq(expectedPlayerPrize, amountWon);
+        }
+    }
+
+    function testNewRoundInitialPot(uint256 _luckyNumber) public {
+        _luckyNumber = bound(_luckyNumber, lucky.EXPOSED_MINIMUM_LUCKY_NUMBER(), lucky.EXPOSED_MAXIMUM_LUCKY_NUMBER());
+        uint256 round = lucky.s_round();
+        address[10] memory players = create10Players();
+        save10PlayersGuesses(players);
+        lucky.setLuckyNumber(round, _luckyNumber);
+
+        uint256 oldRoundPot = lucky.s_totalPot();
+        lucky.exposedCalculateNewRoundInitialPot();
+        uint256 newRoundPot = lucky.s_totalPot();
+
+        if (
+            lucky.exposedTimesTheLuckyNumberWasGuessed() == 0 && lucky.exposedTimesTheLuckyNumberWasAlmostGuessed() == 0
+        ) {
+            assertEq(oldRoundPot, newRoundPot);
+        } else if (
+            lucky.exposedTimesTheLuckyNumberWasGuessed() > 0 && lucky.exposedTimesTheLuckyNumberWasAlmostGuessed() == 0
+        ) {
+            assertEq(newRoundPot, oldRoundPot - lucky.s_firstPrize());
+        } else if (
+            lucky.exposedTimesTheLuckyNumberWasGuessed() == 0 && lucky.exposedTimesTheLuckyNumberWasAlmostGuessed() > 0
+        ) {
+            assertEq(newRoundPot, oldRoundPot - lucky.s_secondPrize());
+        } else {
+            assertEq(newRoundPot, oldRoundPot - lucky.s_firstPrize() - lucky.s_secondPrize());
         }
     }
 }
