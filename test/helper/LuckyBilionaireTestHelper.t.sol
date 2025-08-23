@@ -83,11 +83,11 @@ contract LuckyBilionaireTestHelper is LuckyBilionaire {
     }
 
     function setFirstPrize(uint256 _prize) external {
-        s_firstPrize = _prize;
+        s_firstPrize += _prize;
     }
 
     function setSecondPrize(uint256 _prize) external {
-        s_secondPrize = _prize;
+        s_secondPrize += _prize;
     }
 
     function setPlayersByNumberGuess(uint256 _round, uint256 _number, address _player) external {
