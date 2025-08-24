@@ -70,6 +70,10 @@ contract LuckyBilionaireTestHelper is LuckyBilionaire {
     /*//////////////////////////////////////////////////////////////
                                 SETTERS
     //////////////////////////////////////////////////////////////*/
+    function setRound(uint256 _round) external {
+        s_round = _round;
+    }
+
     function setLuckyNumber(uint256 _round, uint256 _luckyNumber) external {
         s_luckyNumber[_round] = _luckyNumber;
     }
