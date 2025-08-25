@@ -20,6 +20,8 @@ contract LuckyBilionaireTest is Test {
         vrfCoordinator.addConsumer(subId, address(lucky));
     }
 
+    receive() external payable {}
+
     /*//////////////////////////////////////////////////////////////
                                  ERRORS
     //////////////////////////////////////////////////////////////*/
@@ -89,6 +91,29 @@ contract LuckyBilionaireTest is Test {
         lucky.savePlayerGuess{value: 1 ether}(_guess);
 
         assertEq(lucky.s_playersByNumberGuess(round, _guess, 0), players[0]);
+    }
+
+    function testSavingGuessRevertWhenOutOfRange(uint256 _guess) public {
+        vm.assume(_guess < lucky.EXPOSED_MINIMUM_LUCKY_NUMBER() || _guess > lucky.EXPOSED_MAXIMUM_LUCKY_NUMBER());
+        address player = makeAddr("player");
+        vm.deal(player, 1 ether);
+        vm.startPrank(player);
+        vm.expectRevert(LuckyBilionaire__GuessOutOfRange.selector);
+        lucky.savePlayerGuess{value: 1 ether}(_guess);
+        vm.stopPrank();
+    }
+
+    function testSavingGuessRevertWhenIncorrectPaymentValue(uint256 _guess, uint256 _value) public {
+        _guess = bound(_guess, lucky.EXPOSED_MINIMUM_LUCKY_NUMBER(), lucky.EXPOSED_MAXIMUM_LUCKY_NUMBER());
+        _value = bound(_value, 0, 100 ether);
+        address player = makeAddr("player");
+        if (_value != lucky.BET_COST()) {
+            vm.deal(player, 100 ether);
+            vm.startPrank(player);
+            vm.expectRevert(LuckyBilionaire__IncorrectPaymentValue.selector);
+            lucky.savePlayerGuess{value: _value}(_guess);
+            vm.stopPrank();
+        }
     }
 
     function testTimesTheLuckyNumberWasGuessed(uint256 _luckyNumber) public {
@@ -386,5 +411,33 @@ contract LuckyBilionaireTest is Test {
         lucky.exposedResumeLuckyBilionaire();
         vm.prank(player);
         lucky.savePlayerGuess{value: betCost}(_luckyNumber);
+    }
+
+    function testOwnerCanWithdrawMoney(uint256 _amount) public {
+        vm.deal(address(lucky), 100 ether);
+        _amount = bound(_amount, 1, address(lucky).balance);
+        lucky.setVault(address(lucky).balance);
+        uint256 ownerBalanceBefore = address(this).balance;
+        uint256 contractBalanceBefore = address(lucky).balance;
+
+        lucky.withdraw(_amount);
+
+        uint256 ownerBalanceAfter = address(this).balance;
+        uint256 contractBalanceAfter = address(lucky).balance;
+
+        assertEq(ownerBalanceAfter, ownerBalanceBefore + _amount);
+        assertEq(contractBalanceAfter, contractBalanceBefore - _amount);
+    }
+
+    function testCannotWithdrawZeroAmount() public {
+        vm.expectRevert(LuckyBilionaire__NeedsToBeMoreThanZero.selector);
+        lucky.withdraw(0);
+    }
+
+    function testWithdrawRevertWhenNoFundsToWithdraw(uint256 _amount) public {
+        vm.assume(_amount > 0);
+        lucky.setVault(0);
+        vm.expectRevert(LuckyBilionaire__NoFundsToWithdraw.selector);
+        lucky.withdraw(1 ether);
     }
 }
