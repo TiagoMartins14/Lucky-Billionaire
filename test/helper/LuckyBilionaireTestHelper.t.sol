@@ -15,6 +15,16 @@ contract LuckyBilionaireTestHelper is LuckyBilionaire {
         LuckyBilionaire(_vrfCoordinator, _keyHash, _subId)
     {}
 
+    /*//////////////////////////////////////////////////////////////
+                                GETTERS
+    //////////////////////////////////////////////////////////////*/
+    function getVault() external view returns (uint256) {
+        return s_vault;
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                           EXPOSED FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
     function exposedRequestRandomNumber() external returns (uint256 _requestId) {
         return requestRandomNumber();
     }
@@ -51,8 +61,8 @@ contract LuckyBilionaireTestHelper is LuckyBilionaire {
         updateStateVariablesFornewRound();
     }
 
-    function exposedAnnounceLuckyNumber() external {
-        announceLuckyNumber();
+    function exposedAdistributePrizes() external {
+        distributePrizes();
     }
 
     function exposedStartNewRoundCleanUp() external {
@@ -76,37 +86,5 @@ contract LuckyBilionaireTestHelper is LuckyBilionaire {
 
     function setLuckyNumber(uint256 _round, uint256 _luckyNumber) external {
         s_luckyNumber[_round] = _luckyNumber;
-    }
-
-    function setVault(uint256 _vault) external {
-        s_exposedVault += _vault;
-    }
-
-    function setTotalPot(uint256 _value) external {
-        s_totalPot += _value;
-    }
-
-    function setFirstPrize(uint256 _prize) external {
-        s_firstPrize += _prize;
-    }
-
-    function setSecondPrize(uint256 _prize) external {
-        s_secondPrize += _prize;
-    }
-
-    function setPlayersByNumberGuess(uint256 _round, uint256 _number, address _player) external {
-        s_playersByNumberGuess[_round][_number].push(_player);
-    }
-
-    function setNumberGuesses(uint256 _round, uint256 _number, address _player, uint256 _timesGuessed) external {
-        s_numberGuesses[_round][_number][_player] += _timesGuessed;
-    }
-
-    function setPendingWithdrawals(address _player, uint256 _amount) external {
-        prize memory prizeToAdd;
-        prizeToAdd.amountWon = _amount;
-        prizeToAdd.dateWon = block.timestamp;
-
-        s_pendingWithdrawals[_player].push(prizeToAdd);
     }
 }
