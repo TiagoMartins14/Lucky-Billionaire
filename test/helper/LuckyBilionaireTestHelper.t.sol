@@ -83,4 +83,8 @@ contract LuckyBilionaireTestHelper is LuckyBilionaire {
     function setLuckyNumber(uint256 _round, uint256 _luckyNumber) external {
         s_luckyNumber[_round] = _luckyNumber;
     }
+
+    function setVault(uint256 _amount) external {
+        s_vault = _amount;
+    }
 }
