@@ -71,7 +71,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     uint256 public s_lastLuckyNumber;
     uint256 public s_lastFirstPrize;
     uint256 public s_lastSecondPrize;
-    uint256 private s_vault;
+    uint256 internal s_vault;
     bytes32 private immutable s_keyHash;
     uint256 private immutable s_subId;
 
@@ -128,8 +128,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
      * @notice Lucky Billionaire is paused between the announcement and the start of a new round.
      */
     function StartNewRound() external onlyOwner {
-        pauseLuckyBilionaire();
-        announceLuckyNumber();
+        distributePrizes();
         startNewRoundCleanUp();
         resumeLuckyBilionaire();
     }
@@ -187,6 +186,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
      * @return _requestId The unique identifier for this VRF request.
      */
     function requestRandomNumber() internal returns (uint256 _requestId) {
+        pauseLuckyBilionaire();
         VRFV2PlusClient.RandomWordsRequest memory req = VRFV2PlusClient.RandomWordsRequest({
             keyHash: s_keyHash,
             subId: s_subId,
@@ -230,20 +230,9 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
      */
     function timesTheLuckyNumberWasAlmostGuessed() internal view returns (uint256 numberOfSecondPrizeWinners) {
         numberOfSecondPrizeWinners = 0;
-        uint256 beforeLuckyNumber;
-        uint256 afterLuckyNumber;
-
-        if (s_luckyNumber[s_round] == MINIMUM_LUCKY_NUMBER) {
-            beforeLuckyNumber = MAXIMUM_LUCKY_NUMBER;
-        } else {
-            beforeLuckyNumber = s_luckyNumber[s_round] - 1;
-        }
-
-        if (s_luckyNumber[s_round] == MAXIMUM_LUCKY_NUMBER) {
-            afterLuckyNumber = MINIMUM_LUCKY_NUMBER;
-        } else {
-            afterLuckyNumber = s_luckyNumber[s_round] + 1;
-        }
+        uint256 luckyNumber = s_luckyNumber[s_round];
+        uint256 beforeLuckyNumber = (luckyNumber == MINIMUM_LUCKY_NUMBER) ? MAXIMUM_LUCKY_NUMBER : luckyNumber - 1;
+        uint256 afterLuckyNumber = (luckyNumber == MAXIMUM_LUCKY_NUMBER) ? MINIMUM_LUCKY_NUMBER : luckyNumber + 1;
 
         address[] memory secondPrizeWinnersBeforeNumber = s_playersByNumberGuess[s_round][beforeLuckyNumber];
         address[] memory secondPrizeWinnersAfterNumber = s_playersByNumberGuess[s_round][afterLuckyNumber];
@@ -288,20 +277,9 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
         }
 
         uint256 individualPrizeParcel = s_secondPrize / overallAlmosLuckyNumberGuesses;
-        uint256 beforeLuckyNumber;
-        uint256 afterLuckyNumber;
-
-        if (s_luckyNumber[s_round] == MINIMUM_LUCKY_NUMBER) {
-            beforeLuckyNumber = MAXIMUM_LUCKY_NUMBER;
-        } else {
-            beforeLuckyNumber = s_luckyNumber[s_round] - 1;
-        }
-
-        if (s_luckyNumber[s_round] == MAXIMUM_LUCKY_NUMBER) {
-            afterLuckyNumber = MINIMUM_LUCKY_NUMBER;
-        } else {
-            afterLuckyNumber = s_luckyNumber[s_round] + 1;
-        }
+        uint256 luckyNumber = s_luckyNumber[s_round];
+        uint256 beforeLuckyNumber = (luckyNumber == MINIMUM_LUCKY_NUMBER) ? MAXIMUM_LUCKY_NUMBER : luckyNumber - 1;
+        uint256 afterLuckyNumber = (luckyNumber == MAXIMUM_LUCKY_NUMBER) ? MINIMUM_LUCKY_NUMBER : luckyNumber + 1;
         address[] memory secondPrizeWinnersBeforeNumber = s_playersByNumberGuess[s_round][beforeLuckyNumber];
         address[] memory secondPrizeWinnersAfterNumber = s_playersByNumberGuess[s_round][afterLuckyNumber];
 
@@ -315,10 +293,10 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
         }
 
         for (uint256 i = 0; i < secondPrizeWinnersAfterNumber.length; i++) {
-            uint256 timesGuessedBeforeNumber =
+            uint256 timesGuessedAfterNumber =
                 s_numberGuesses[s_round][afterLuckyNumber][secondPrizeWinnersAfterNumber[i]];
             prize memory winnerPrize;
-            winnerPrize.amountWon = individualPrizeParcel * timesGuessedBeforeNumber;
+            winnerPrize.amountWon = individualPrizeParcel * timesGuessedAfterNumber;
             winnerPrize.dateWon = block.timestamp;
             s_pendingWithdrawals[secondPrizeWinnersAfterNumber[i]].push(winnerPrize);
         }
@@ -331,20 +309,9 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     function calculateNewRoundInitialPot() internal {
         // uint256 winnersShare = s_totalPot * FIRST_WIN_PERCENTAGE / 100;
         // uint256 secondWinnersShare = s_totalPot * SECOND_WIN_PERCENTAGE / 100;
-        uint256 beforeLuckyNumber;
-        uint256 afterLuckyNumber;
-
-        if (s_luckyNumber[s_round] == MINIMUM_LUCKY_NUMBER) {
-            beforeLuckyNumber = MAXIMUM_LUCKY_NUMBER;
-        } else {
-            beforeLuckyNumber = s_luckyNumber[s_round] - 1;
-        }
-
-        if (s_luckyNumber[s_round] == MAXIMUM_LUCKY_NUMBER) {
-            afterLuckyNumber = MINIMUM_LUCKY_NUMBER;
-        } else {
-            afterLuckyNumber = s_luckyNumber[s_round] + 1;
-        }
+        uint256 luckyNumber = s_luckyNumber[s_round];
+        uint256 beforeLuckyNumber = (luckyNumber == MINIMUM_LUCKY_NUMBER) ? MAXIMUM_LUCKY_NUMBER : luckyNumber - 1;
+        uint256 afterLuckyNumber = (luckyNumber == MAXIMUM_LUCKY_NUMBER) ? MINIMUM_LUCKY_NUMBER : luckyNumber + 1;
 
         if (
             s_playersByNumberGuess[s_round][s_luckyNumber[s_round]].length > 0
@@ -376,18 +343,44 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
      * @dev Prizes are deemed unclaimed if not withdrawn within 28 days.
      */
     function retreiveUnclaimedPrizes() internal {
-        if (s_round > 4) {
+        if (s_round >= 4) {
             for (uint8 i = 4; i > 0; i--) {
                 uint256 round = s_round - i;
                 uint256 luckyNumber = s_luckyNumber[round];
-                for (uint256 j = 0; j < s_playersByNumberGuess[round][luckyNumber].length; j++) {
-                    prize[] storage playerPrizes = s_pendingWithdrawals[s_playersByNumberGuess[round][luckyNumber][j]];
-                    if (block.timestamp - playerPrizes[i].dateWon > 28 days) {
-                        s_vault += playerPrizes[i].amountWon;
-                        playerPrizes[i] = playerPrizes[playerPrizes.length - 1];
-                        playerPrizes.pop();
-                    }
+
+                uint256 beforeLuckyNumber =
+                    (luckyNumber == MINIMUM_LUCKY_NUMBER) ? MAXIMUM_LUCKY_NUMBER : luckyNumber - 1;
+                uint256 afterLuckyNumber =
+                    (luckyNumber == MAXIMUM_LUCKY_NUMBER) ? MINIMUM_LUCKY_NUMBER : luckyNumber + 1;
+
+                address[] memory winners = s_playersByNumberGuess[round][luckyNumber];
+                address[] memory secondWinnersBefore = s_playersByNumberGuess[round][beforeLuckyNumber];
+                address[] memory secondWinnersAfter = s_playersByNumberGuess[round][afterLuckyNumber];
+
+                for (uint256 j = 0; j < winners.length; j++) {
+                    _retreiveFromPlayer(winners[j]);
                 }
+                for (uint256 j = 0; j < secondWinnersBefore.length; j++) {
+                    _retreiveFromPlayer(secondWinnersBefore[j]);
+                }
+                for (uint256 j = 0; j < secondWinnersAfter.length; j++) {
+                    _retreiveFromPlayer(secondWinnersAfter[j]);
+                }
+            }
+        }
+    }
+
+    /**
+     * @dev Helper to process and retrieve expired prizes for a single player.
+     */
+    function _retreiveFromPlayer(address player) private {
+        prize[] storage playerPrizes = s_pendingWithdrawals[player];
+        for (uint256 k = playerPrizes.length; k > 0; k--) {
+            uint256 prizeIndex = k - 1;
+            if (block.timestamp - playerPrizes[prizeIndex].dateWon > 28 days) {
+                s_vault += playerPrizes[prizeIndex].amountWon;
+                playerPrizes[prizeIndex] = playerPrizes[playerPrizes.length - 1];
+                playerPrizes.pop();
             }
         }
     }
@@ -406,7 +399,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     /**
      * @notice Requests a random number from VRF Chainlink and then distributes prizes accordingly.
      */
-    function announceLuckyNumber() internal {
+    function distributePrizes() internal {
         requestRandomNumber();
         distributeFirstPrize();
         distributeSecondPrize();
