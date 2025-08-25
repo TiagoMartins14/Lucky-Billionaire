@@ -340,4 +340,51 @@ contract LuckyBilionaireTest is Test {
             vm.stopPrank();
         }
     }
+
+    function testLuckyNumberAnnouncementAndNewRoundCleanup(uint256 _luckyNumber) public {
+        _luckyNumber = bound(_luckyNumber, lucky.EXPOSED_MINIMUM_LUCKY_NUMBER(), lucky.EXPOSED_MAXIMUM_LUCKY_NUMBER());
+        uint256 round = lucky.s_round();
+        address[10] memory players = create10Players();
+        save10PlayersGuesses(players);
+        lucky.setLuckyNumber(round, _luckyNumber);
+
+        uint256 timesLuckyNUmberWasGuessed = lucky.exposedTimesTheLuckyNumberWasGuessed();
+        uint256 timesLuckyNumberWasAlmostGuessed = lucky.exposedTimesTheLuckyNumberWasAlmostGuessed();
+        uint256 previousRound = lucky.s_round();
+        uint256 previousFirstPrize = lucky.s_firstPrize();
+        uint256 previousSecondPrize = lucky.s_secondPrize();
+
+        lucky.exposedDistributePrizes();
+        lucky.exposedStartNewRoundCleanUp();
+
+        if (timesLuckyNUmberWasGuessed == 0 && timesLuckyNumberWasAlmostGuessed == 0) {
+            assertEq(lucky.s_firstPrize(), previousFirstPrize);
+            assertEq(lucky.s_secondPrize(), previousSecondPrize);
+        } else if (timesLuckyNUmberWasGuessed > 0 && timesLuckyNumberWasAlmostGuessed == 0) {
+            assertEq(lucky.s_firstPrize(), previousSecondPrize * lucky.FIRST_WIN_PERCENTAGE() / 100);
+            assertEq(lucky.s_secondPrize(), previousSecondPrize * lucky.SECOND_WIN_PERCENTAGE() / 100);
+        } else if (timesLuckyNUmberWasGuessed == 0 && timesLuckyNumberWasAlmostGuessed > 0) {
+            assertEq(lucky.s_firstPrize(), previousFirstPrize * lucky.FIRST_WIN_PERCENTAGE() / 100);
+            assertEq(lucky.s_secondPrize(), previousFirstPrize * lucky.SECOND_WIN_PERCENTAGE() / 100);
+        } else {
+            assertEq(lucky.s_firstPrize(), 0);
+            assertEq(lucky.s_secondPrize(), 0);
+        }
+        assertEq(lucky.s_round(), previousRound + 1);
+        assertEq(lucky.s_luckyNumber(lucky.s_round()), 0);
+    }
+
+    function testPausedAndUnpausedState(uint256 _luckyNumber) public {
+        _luckyNumber = bound(_luckyNumber, lucky.EXPOSED_MINIMUM_LUCKY_NUMBER(), lucky.EXPOSED_MAXIMUM_LUCKY_NUMBER());
+        address player = makeAddr("player");
+        uint256 betCost = lucky.BET_COST();
+        vm.deal(player, 1 ether);
+        lucky.exposedPauseLuckyBilionaire();
+        vm.prank(player);
+        vm.expectRevert("Pausable: paused");
+        lucky.savePlayerGuess{value: betCost}(_luckyNumber);
+        lucky.exposedResumeLuckyBilionaire();
+        vm.prank(player);
+        lucky.savePlayerGuess{value: betCost}(_luckyNumber);
+    }
 }
