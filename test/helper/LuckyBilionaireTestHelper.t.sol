@@ -29,10 +29,6 @@ contract LuckyBilionaireTestHelper is LuckyBilionaire {
         return requestRandomNumber();
     }
 
-    function exposedFulfillRandomWords(uint256, /*_requestId*/ uint256[] calldata _randomWords) external {
-        fulfillRandomWords(0, _randomWords);
-    }
-
     function exposedTimesTheLuckyNumberWasGuessed() external view returns (uint256 numberOfFirstPrizeWinners) {
         return timesTheLuckyNumberWasGuessed();
     }
@@ -61,7 +57,7 @@ contract LuckyBilionaireTestHelper is LuckyBilionaire {
         updateStateVariablesFornewRound();
     }
 
-    function exposedAdistributePrizes() external {
+    function exposedDistributePrizes() external {
         distributePrizes();
     }
 
