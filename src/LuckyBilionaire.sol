@@ -76,6 +76,14 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     uint256 private immutable s_subId;
 
     /*//////////////////////////////////////////////////////////////
+                                 EVENTS
+    //////////////////////////////////////////////////////////////*/
+    event PlayerGuessed(address indexed player, uint256 indexed guess, uint256 indexed round);
+    event PrizeClaimed(address indexed player, uint256 amount);
+    event MoneyWithdrawn(address indexed owner, uint256 amount);
+    event AnnounceLuckyNumber(uint256 indexed luckyNumber, uint256 indexed round);
+
+    /*//////////////////////////////////////////////////////////////
                                  ERRORS
     //////////////////////////////////////////////////////////////*/
     error LuckyBilionaire__GuessOutOfRange();
@@ -121,6 +129,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
         }
 
         s_numberGuesses[s_round][_guess][msg.sender] += 1;
+        emit PlayerGuessed(msg.sender, _guess, s_round);
     }
 
     /**
@@ -128,6 +137,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
      * @notice Lucky Billionaire is paused between the announcement and the start of a new round.
      */
     function StartNewRound() external onlyOwner {
+        pauseLuckyBilionaire();
         distributePrizes();
         startNewRoundCleanUp();
         resumeLuckyBilionaire();
@@ -156,6 +166,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
         if (!success) {
             revert LuckyBilionaire__TransferFailed();
         }
+        emit PrizeClaimed(msg.sender, amount);
     }
 
     /**
@@ -174,6 +185,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
         if (!success) {
             revert LuckyBilionaire__TransferFailed();
         }
+        emit MoneyWithdrawn(msg.sender, _amount);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -197,6 +209,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
         });
 
         _requestId = s_vrfCoordinator.requestRandomWords(req);
+        resumeLuckyBilionaire();
     }
 
     /**
@@ -209,6 +222,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     function fulfillRandomWords(uint256, /*_requestId*/ uint256[] calldata _randomWords) internal override {
         uint256 rawRandom = _randomWords[0];
         s_luckyNumber[s_round] = (rawRandom % MAXIMUM_LUCKY_NUMBER) + 1;
+        emit AnnounceLuckyNumber(s_luckyNumber[s_round], s_round);
     }
 
     /**
