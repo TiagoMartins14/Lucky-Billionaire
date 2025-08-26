@@ -8,7 +8,7 @@ contract DeployLuckyBilionaire is Script {
 	function run() external {
 		address vrfCoordinator = vm.envAddress("VRF_COORDINATOR");
 		bytes32 keyHash = vm.envBytes32("KEY_HASH");
-		uint256 subId = vm.envUint("SUBSCRIPTION_ID");
+		uint256 subId = vm.envUint("SUB_ID");
 
 		vm.startBroadcast();
 		new LuckyBilionaire(vrfCoordinator, keyHash, subId);
