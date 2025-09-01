@@ -188,6 +188,71 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
         emit MoneyWithdrawn(msg.sender, _amount);
     }
 
+    // mapping(uint256 round => mapping(uint256 number => address[] player)) public s_playersByNumberGuess;
+    // mapping(uint256 round => mapping(uint256 number => mapping(address player => uint256 timesGuessed))) public
+    //     s_numberGuesses;
+    // mapping(uint256 round => uint256 number) public s_luckyNumber;
+    // mapping(address player => prize[] prizes) public s_pendingWithdrawals;
+    // uint256 public s_round;
+    // uint256 public s_totalPot;
+    // uint256 public s_firstPrize; // s_totalPot * FIRST_WIN_PERCENTAGE / 100
+    // uint256 public s_secondPrize; // s_totalPot * SECOND_WIN_PERCENTAGE / 100
+    // uint256 public s_lastLuckyNumber;
+    // uint256 public s_lastFirstPrize;
+    // uint256 public s_lastSecondPrize;
+
+    function getPlayersByNumberGuess(uint256 round, uint256 number)
+        external
+        view
+        returns (address[] memory players)
+    {
+        return s_playersByNumberGuess[round][number];
+    }
+
+    function getNumberGuesses(uint256 round, uint256 number, address player)
+        external
+        view
+        returns (uint256 timesGuessed)
+    {
+        return s_numberGuesses[round][number][player];
+    }
+
+    function getLuckyNumber(uint256 round) external view returns (uint256) {
+        return s_luckyNumber[round];
+    }
+
+    function getPendingWithdrawals(address player) external view returns (prize[] memory prizes) {
+        return s_pendingWithdrawals[player];
+    }
+
+    function getRound() external view returns (uint256) {
+        return s_round;
+    }
+
+    function getTotalPot() external view returns (uint256) {
+        return s_totalPot;
+    }
+
+    function getFirstPrize() external view returns (uint256) {
+        return s_firstPrize;
+    }
+
+    function getSecondPrize() external view returns (uint256) {
+        return s_secondPrize;
+    }
+
+    function getLastLuckyNumber() external view returns (uint256) {
+        return s_lastLuckyNumber;
+    }
+
+    function getLastFirstPrize() external view returns (uint256) {
+        return s_lastFirstPrize;
+    }
+
+    function getLastSecondPrize() external view returns (uint256) {
+        return s_lastSecondPrize;
+    }
+
     /*//////////////////////////////////////////////////////////////
                                 INTERNAL
     //////////////////////////////////////////////////////////////*/
