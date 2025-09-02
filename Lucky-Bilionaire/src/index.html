@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucky Billionaire dApp</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Simple loading spinner */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border-left-color: #09f;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white antialiased">
+    <div id="root"></div>
+
+    <!-- Dependencies for React, WAGMI, and Viem -->
+    <!-- Using esm.sh for easy module imports -->
+    <script type="module">
+        import React, { useState, useEffect } from 'https://esm.sh/react@18.2.0';
+        import ReactDOM from 'https://esm.sh/react-dom@18.2.0/client';
+        import {
+            WagmiProvider,
+            createConfig,
+            http,
+            useAccount,
+            useConnect,
+            useDisconnect,
+            useReadContract,
+            useWriteContract,
+            useWaitForTransactionReceipt
+        } from 'https://esm.sh/wagmi@2.9.2';
+        import { mainnet, sepolia } from 'https://esm.sh/wagmi@2.9.2/chains';
+        import { injected } from 'https://esm.sh/wagmi@2.9.2/connectors';
+        import { QueryClient, QueryClientProvider } from 'https://esm.sh/@tanstack/react-query@5.35.1';
+        import { formatEther, parseEther } from 'https://esm.sh/viem@2.10.3';
+
+        // --- SMART CONTRACT CONFIGURATION ---
+        // IMPORTANT: Replace with your actual contract address
+        const contractAddress = '0xFCC7d7F98fc3E1587bC4759A2467DEA5dEb8a358'; // <--- REPLACE THIS ADDRESS
+
+        // The ABI you provided for your smart contract
+        const contractAbi = [{"type":"constructor","inputs":[{"name":"vrfCoordinator","type":"address","internalType":"address"},{"name":"keyHash","type":"bytes32","internalType":"bytes32"},{"name":"subId","type":"uint256","internalType":"uint256"}],"stateMutability":"nonpayable"},{"type":"function","name":"BET_COST","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"FIRST_WIN_PERCENTAGE","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"SECOND_WIN_PERCENTAGE","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"StartNewRound","inputs":[],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"acceptOwnership","inputs":[],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"claimPrize","inputs":[],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"owner","inputs":[],"outputs":[{"name":"","type":"address","internalType":"address"}],"stateMutability":"view"},{"type":"function","name":"paused","inputs":[],"outputs":[{"name":"","type":"bool","internalType":"bool"}],"stateMutability":"view"},{"type":"function","name":"rawFulfillRandomWords","inputs":[{"name":"requestId","type":"uint256","internalType":"uint256"},{"name":"randomWords","type":"uint256[]","internalType":"uint256[]"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"s_firstPrize","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"s_lastFirstPrize","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"s_lastLuckyNumber","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"s_lastSecondPrize","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"s_luckyNumber","inputs":[{"name":"round","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"number","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"s_numberGuesses","inputs":[{"name":"round","type":"uint256","internalType":"uint256"},{"name":"number","type":"uint256","internalType":"uint256"},{"name":"player","type":"address","internalType":"address"}],"outputs":[{"name":"timesGuessed","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"s_pendingWithdrawals","inputs":[{"name":"player","type":"address","internalType":"address"},{"name":"","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"amountWon","type":"uint256","internalType":"uint256"},{"name":"dateWon","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"s_playersByNumberGuess","inputs":[{"name":"round","type":"uint256","internalType":"uint256"},{"name":"number","type":"uint256","internalType":"uint256"},{"name":"","type":"uint256","internalType":"uint256"}],"outputs":[{"name":"player","type":"address","internalType":"address"}],"stateMutability":"view"},{"type":"function","name":"s_round","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"s_secondPrize","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"s_totalPot","inputs":[],"outputs":[{"name":"","type":"uint256","internalType":"uint256"}],"stateMutability":"view"},{"type":"function","name":"s_vrfCoordinator","inputs":[],"outputs":[{"name":"","type":"address","internalType":"contract IVRFCoordinatorV2Plus"}],"stateMutability":"view"},{"type":"function","name":"savePlayerGuess","inputs":[{"name":"_guess","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"payable"},{"type":"function","name":"setCoordinator","inputs":[{"name":"_vrfCoordinator","type":"address","internalType":"address"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"transferOwnership","inputs":[{"name":"to","type":"address","internalType":"address"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"function","name":"withdraw","inputs":[{"name":"_amount","type":"uint256","internalType":"uint256"}],"outputs":[],"stateMutability":"nonpayable"},{"type":"event","name":"AnnounceLuckyNumber","inputs":[{"name":"luckyNumber","type":"uint256","indexed":true,"internalType":"uint256"},{"name":"round","type":"uint256","indexed":true,"internalType":"uint256"}],"anonymous":false},{"type":"event","name":"CoordinatorSet","inputs":[{"name":"vrfCoordinator","type":"address","indexed":false,"internalType":"address"}],"anonymous":false},{"type":"event","name":"MoneyWithdrawn","inputs":[{"name":"owner","type":"address","indexed":true,"internalType":"address"},{"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"type":"event","name":"OwnershipTransferRequested","inputs":[{"name":"from","type":"address","indexed":true,"internalType":"address"},{"name":"to","type":"address","indexed":true,"internalType":"address"}],"anonymous":false},{"type":"event","name":"OwnershipTransferred","inputs":[{"name":"from","type":"address","indexed":true,"internalType":"address"},{"name":"to","type":"address","indexed":true,"internalType":"address"}],"anonymous":false},{"type":"event","name":"Paused","inputs":[{"name":"account","type":"address","indexed":false,"internalType":"address"}],"anonymous":false},{"type":"event","name":"PlayerGuessed","inputs":[{"name":"player","type":"address","indexed":true,"internalType":"address"},{"name":"guess","type":"uint256","indexed":true,"internalType":"uint256"},{"name":"round","type":"uint256","indexed":true,"internalType":"uint256"}],"anonymous":false},{"type":"event","name":"PrizeClaimed","inputs":[{"name":"player","type":"address","indexed":true,"internalType":"address"},{"name":"amount","type":"uint256","indexed":false,"internalType":"uint256"}],"anonymous":false},{"type":"event","name":"Unpaused","inputs":[{"name":"account","type":"address","indexed":false,"internalType":"address"}],"anonymous":false},{"type":"error","name":"LuckyBilionaire__GuessOutOfRange","inputs":[]},{"type":"error","name":"LuckyBilionaire__IncorrectPaymentValue","inputs":[]},{"type":"error","name":"LuckyBilionaire__NeedsToBeMoreThanZero","inputs":[]},{"type":"error","name":"LuckyBilionaire__NoFundsToWithdraw","inputs":[]},{"type":"error","name":"LuckyBilionaire__TransferFailed","inputs":[]},{"type":"error","name":"OnlyCoordinatorCanFulfill","inputs":[{"name":"have","type":"address","internalType":"address"},{"name":"want","type":"address","internalType":"address"}]},{"type":"error","name":"OnlyOwnerOrCoordinator","inputs":[{"name":"have","type":"address","internalType":"address"},{"name":"owner","type":"address","internalType":"address"},{"name":"coordinator","type":"address","internalType":"address"}]},{"type":"error","name":"ZeroAddress","inputs":[]}];
+
+        // --- WAGMI CONFIGURATION ---
+        // Sets up the configuration for WAGMI, specifying the chains and transports.
+        // We're using the Sepolia testnet here as an example.
+        const config = createConfig({
+            chains: [sepolia, mainnet],
+            transports: {
+                [sepolia.id]: http(),
+                [mainnet.id]: http(),
+            },
+        });
+
+        const queryClient = new QueryClient();
+
+        // --- REACT COMPONENTS ---
+
+        // Component to handle wallet connection and display account info
+        function WalletConnect() {
+            const { address, isConnected } = useAccount();
+            const { connectors, connect, status, error } = useConnect();
+            const { disconnect } = useDisconnect();
+
+            return (
+                <div className="bg-gray-800 p-4 rounded-lg shadow-lg">
+                    <h2 className="text-xl font-bold mb-2 text-cyan-400">Wallet Connection</h2>
+                    {isConnected ? (
+                        <div className="space-y-2">
+                            <p className="text-green-400">Connected</p>
+                            <p className="text-sm break-all">Address: {address}</p>
+                            <button
+                                onClick={() => disconnect()}
+                                className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
+                            >
+                                Disconnect
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            {connectors.map((connector) => (
+                                <button
+                                    key={connector.uid}
+                                    onClick={() => connect({ connector })}
+                                    className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
+                                >
+                                    {connector.name}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                     {status === 'pending' && <p className="text-yellow-400 mt-2">Connecting...</p>}
+                     {error && <p className="text-red-400 mt-2">Error: {error.message}</p>}
+                </div>
+            );
+        }
+
+        // Component to display information read from the smart contract
+        function ContractInfo() {
+            // WAGMI hook to read the current round
+            const { data: round, isLoading: isLoadingRound, error: errorRound } = useReadContract({
+                address: contractAddress,
+                abi: contractAbi,
+                functionName: 's_round',
+            });
+
+            // WAGMI hook to read the total pot
+            const { data: totalPot, isLoading: isLoadingPot, error: errorPot } = useReadContract({
+                address: contractAddress,
+                abi: contractAbi,
+                functionName: 's_totalPot',
+            });
+
+            // WAGMI hook to read the bet cost
+            const { data: betCost, isLoading: isLoadingBetCost, error: errorBetCost } = useReadContract({
+                address: contractAddress,
+                abi: contractAbi,
+                functionName: 'BET_COST',
+            });
+
+            const renderValue = (value, isLoading, error, formatter = (v) => v.toString()) => {
+                if (isLoading) return <span className="text-gray-400">Loading...</span>;
+                if (error) return <span className="text-red-400">Error</span>;
+                return value !== undefined ? formatter(value) : 'N/A';
+            };
+
+            return (
+                <div className="bg-gray-800 p-4 rounded-lg shadow-lg space-y-3">
+                    <h2 className="text-xl font-bold mb-2 text-cyan-400">Game Information</h2>
+                    <div className="flex justify-between">
+                        <span className="font-semibold">Current Round:</span>
+                        <span>{renderValue(round, isLoadingRound, errorRound)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="font-semibold">Total Pot:</span>
+                        <span>{renderValue(totalPot, isLoadingPot, errorPot, (v) => `${formatEther(v)} ETH`)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="font-semibold">Bet Cost:</span>
+                        <span>{renderValue(betCost, isLoadingBetCost, errorBetCost, (v) => `${formatEther(v)} ETH`)}</span>
+                    </div>
+                </div>
+            );
+        }
+
+        // Component for player actions, like making a guess
+        function PlayerActions() {
+            const [guess, setGuess] = useState('');
+            const { isConnected } = useAccount();
+            const { data: betCost } = useReadContract({
+                address: contractAddress,
+                abi: contractAbi,
+                functionName: 'BET_COST',
+            });
+
+            const { data: hash, error, isPending, writeContract } = useWriteContract();
+
+            const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
+
+            const handleSubmitGuess = async (e) => {
+                e.preventDefault();
+                if (!guess || !betCost) {
+                    alert('Please enter a guess and ensure bet cost is loaded.');
+                    return;
+                }
+                writeContract({
+                    address: contractAddress,
+                    abi: contractAbi,
+                    functionName: 'savePlayerGuess',
+                    args: [BigInt(guess)],
+                    value: betCost, // This is a payable function, so we send the bet cost
+                });
+            };
+
+            return (
+                <div className="bg-gray-800 p-4 rounded-lg shadow-lg">
+                    <h2 className="text-xl font-bold mb-2 text-cyan-400">Make Your Guess</h2>
+                    {!isConnected ? (
+                        <p className="text-yellow-400">Please connect your wallet to play.</p>
+                    ) : (
+                        <form onSubmit={handleSubmitGuess} className="space-y-4">
+                            <input
+                                type="number"
+                                value={guess}
+                                onChange={(e) => setGuess(e.target.value)}
+                                placeholder="Enter your number (0-99)"
+                                min="0"
+                                className="w-full p-2 rounded-lg bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                            />
+                            <button
+                                type="submit"
+                                disabled={isPending || !guess}
+                                className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 disabled:bg-gray-500 disabled:cursor-not-allowed flex items-center justify-center"
+                            >
+                                {isPending ? <div className="spinner"></div> : 'Submit Guess'}
+                            </button>
+                        </form>
+                    )}
+                    {hash && <div className="mt-4 text-sm break-all">Transaction Hash: {hash}</div>}
+                    {isConfirming && <div className="mt-2 text-yellow-400">Waiting for confirmation...</div>}
+                    {isConfirmed && <div className="mt-2 text-green-400">Transaction confirmed! Your guess is in.</div>}
+                    {error && <div className="mt-2 text-red-400">Error: {error.shortMessage || error.message}</div>}
+                </div>
+            );
+        }
+
+
+        // Main App component that structures the page
+        function App() {
+            // Simple check if the contract address is a placeholder
+            const isAddressSet = contractAddress && contractAddress !== '0x...';
+
+            return (
+                <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+                    <div className="max-w-md w-full mx-auto space-y-6">
+                        <header className="text-center">
+                            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+                                Lucky Billionaire
+                            </h1>
+                            <p className="text-gray-400 mt-2">A Decentralized Lottery Game</p>
+                        </header>
+
+                        {!isAddressSet ? (
+                             <div className="bg-yellow-900 border-l-4 border-yellow-500 text-yellow-100 p-4 rounded-lg" role="alert">
+                                <p className="font-bold">Configuration Needed</p>
+                                <p>Please replace the placeholder contract address in the source code to interact with your dApp.</p>
+                            </div>
+                        ) : (
+                           <>
+                                <WalletConnect />
+                                <ContractInfo />
+                                <PlayerActions />
+                           </>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Render the main App component
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(
+            <React.StrictMode>
+                <WagmiProvider config={config}>
+                    <QueryClientProvider client={queryClient}>
+                        <App />
+                    </QueryClientProvider>
+                </WagmiProvider>
+            </React.StrictMode>
+        );
+    </script>
+</body>
+</html>
