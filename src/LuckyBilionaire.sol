@@ -68,7 +68,6 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     uint256 public s_totalPot;
     uint256 public s_firstPrize; // s_totalPot * FIRST_WIN_PERCENTAGE / 100
     uint256 public s_secondPrize; // s_totalPot * SECOND_WIN_PERCENTAGE / 100
-    uint256 public s_lastLuckyNumber;
     uint256 public s_lastFirstPrize;
     uint256 public s_lastSecondPrize;
     uint256 internal s_vault;
@@ -188,19 +187,6 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
         emit MoneyWithdrawn(msg.sender, _amount);
     }
 
-    // mapping(uint256 round => mapping(uint256 number => address[] player)) public s_playersByNumberGuess;
-    // mapping(uint256 round => mapping(uint256 number => mapping(address player => uint256 timesGuessed))) public
-    //     s_numberGuesses;
-    // mapping(uint256 round => uint256 number) public s_luckyNumber;
-    // mapping(address player => prize[] prizes) public s_pendingWithdrawals;
-    // uint256 public s_round;
-    // uint256 public s_totalPot;
-    // uint256 public s_firstPrize; // s_totalPot * FIRST_WIN_PERCENTAGE / 100
-    // uint256 public s_secondPrize; // s_totalPot * SECOND_WIN_PERCENTAGE / 100
-    // uint256 public s_lastLuckyNumber;
-    // uint256 public s_lastFirstPrize;
-    // uint256 public s_lastSecondPrize;
-
     function getPlayersByNumberGuess(uint256 round, uint256 number)
         external
         view
@@ -239,10 +225,6 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
 
     function getSecondPrize() external view returns (uint256) {
         return s_secondPrize;
-    }
-
-    function getLastLuckyNumber() external view returns (uint256) {
-        return s_lastLuckyNumber;
     }
 
     function getLastFirstPrize() external view returns (uint256) {
