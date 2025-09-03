@@ -245,7 +245,6 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
      * @return _requestId The unique identifier for this VRF request.
      */
     function requestRandomNumber() internal returns (uint256 _requestId) {
-        pauseLuckyBilionaire();
         VRFV2PlusClient.RandomWordsRequest memory req = VRFV2PlusClient.RandomWordsRequest({
             keyHash: s_keyHash,
             subId: s_subId,
@@ -256,7 +255,6 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
         });
 
         _requestId = s_vrfCoordinator.requestRandomWords(req);
-        resumeLuckyBilionaire();
     }
 
     /**
