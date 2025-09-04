@@ -16,7 +16,6 @@ const InfoCard = ({ className, title, message }) => (
   </div>
 );
 
-
 // Reusable function to render winner addresses
 function renderWinners(winners: readonly `0x${string}`[] | undefined) {
   if (!winners || winners.length === 0) {
@@ -101,13 +100,13 @@ function LuckyBilionaire() {
           
           {/* This container acts as the first column, holding the heading and the prize cards */}
           <div className="flex-column">
-            <h2 className="text-3xl font-bold mb-6 text-center md:text-left">Lottery Results</h2>
+            <h3 className="text-3xl font-bold mb-6 text-center md:text-left">Lottery Results</h3>
             <div className="info-section">
               {/* The prize cards are now arranged using a responsive grid defined in the CSS */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <InfoCard 
                   className="lucky-number-card" 
-                  title="Last Week's Lucky Number" 
+                  title="Lucky Number" 
                   message={lastWeekLuckyNumber?.toString() ?? "N/A"} 
                 />
                 
@@ -117,9 +116,9 @@ function LuckyBilionaire() {
                   message={renderWinners(winnersExact)}
                 />
 
-                <InfoCard 
+                <InfoCard
                   className="first-prize-card" 
-                  title="Last Week's First Prize" 
+                  title="First Prize" 
                   message={`${lastWeekFirstPrize?.toString() ?? "N/A"} ETH`}
                 />
                           
@@ -131,7 +130,7 @@ function LuckyBilionaire() {
 
                 <InfoCard 
                   className="second-prize-card" 
-                  title="Last Week's Second Prize" 
+                  title="Second Prize" 
                   message={`${lastWeekSecondPrize?.toString() ?? "N/A"} ETH`}
                 />
               </div>
@@ -139,17 +138,20 @@ function LuckyBilionaire() {
           </div>
 
           {/* This is the second column for the new features */}
-          <div className="new-container flex-column info-card">
-            <h3>New Lottery Features</h3>
-            <p className="text-gray-700 mb-4">
-              This is a new section for additional information, such as upcoming jackpot details, rules, or a ticket purchasing interface.
-            </p>
-            <div className="bg-gray-100 p-4 rounded-lg">
-              <p className="font-semibold text-lg text-gray-800">Next Jackpot</p>
-              <p className="text-2xl font-bold text-indigo-600 mt-1">250 ETH</p>
-              <p className="text-sm text-gray-500 mt-2">
-                Draw date: September 15th
-              </p>
+          <div className="flex-column">
+            <h3>Join The Fun</h3>
+            <div className="current-prizes interaction-card">
+              <h3>CURRENT JACKPOT</h3>
+              <h3>14 ETH</h3>
+            </div>
+            <div className="place-bet interaction-card">
+              <h3>PLACE YOUR BET</h3>
+              <input type="text" placeholder="Chose a number from 1 - 50" />
+              <button className="bet-button">Bet 1 ETH</button>
+            </div>
+            <div className="withdraw-prize interaction-card">
+              <h3>ARE YOU A LUCKY WINNER?</h3>
+              <button className="withdraw-prize">Withdraw Prize!</button>
             </div>
           </div>
         </div>
