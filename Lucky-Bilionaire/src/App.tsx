@@ -1,6 +1,6 @@
-import React from 'react';
+// import React from 'react';
 import { sepolia } from 'wagmi/chains';
-import { useReadContract } from 'wagmi';
+import { useReadContract, useWriteContract } from 'wagmi';
 import { abi } from "./abi.ts";
 import './index.css';
 
@@ -31,7 +31,6 @@ function renderWinners(winners: readonly `0x${string}`[] | undefined) {
 }
 
 function LuckyBilionaire() {
-  // All data fetching logic is consolidated here, as before.
   const { data: currentRound, isLoading: isCurrentRoundLoading, isError: isCurrentRoundError } = useReadContract({
     abi, address: CONTRACT_ADDRESS, functionName: 'getRound', chainId: sepolia.id,
   });
@@ -73,7 +72,6 @@ function LuckyBilionaire() {
     chainId: sepolia.id, query: { enabled: previousRound !== undefined && luckyNumberAfter !== undefined },
   });
 
-  // Consolidated Loading and Error handling
   const isLoading = isCurrentRoundLoading || isLuckyNumberLoading || isFirstPrizeLoading || isSecondPrizeLoading || isWinnersExactLoading || isWinnersBeforeLoading || isWinnersAfterLoading;
   const isError = isCurrentRoundError || isLuckyNumberError || isWinnersExactError;
 
@@ -85,6 +83,31 @@ function LuckyBilionaire() {
     return <div className="status-message error">Error fetching data. Check your network connection or contract address.</div>;
   }
 
+  // const [betNumber, setBetNumber] = useState('');
+
+  // function Bet({ betNumber }: { betNumber: number }) {
+  //   const { writeContract } = useWriteContract();
+  //   const [betMessage, setBetMessage] = useState('');
+
+  //   const handleBet = () => {
+  //     // Check if a valid number is provided
+  //     if (betNumber < MIN_LUCKY_NUMBER || betNumber > MAX_LUCKY_NUMBER) {
+  //       setBetMessage(`Please enter a number between ${MIN_LUCKY_NUMBER} and ${MAX_LUCKY_NUMBER}.`);
+  //       return;
+  //     }
+      
+  //     setBetMessage('Transaction initiated! Check your wallet to confirm.');
+
+  //     writeContract({
+  //       abi,
+  //       address: CONTRACT_ADDRESS,
+  //       functionName: 'savePlayerGuess',
+  //       args: [BigInt(betNumber)],
+  //       value: BigInt('1000000000000000000') // 1 ETH in Wei
+  //     });
+  //   }
+  // };
+
   // Combine winners for display
   const secondPlaceWinners = winnersBefore?.concat(winnersAfter ?? []) ?? [];
 
@@ -92,18 +115,14 @@ function LuckyBilionaire() {
     <div>
       <div className="lucky-bilionaire-container">
         <h1>
-          Lucky Billionaire
+          LUCKY BILIONAIRE
         </h1>
-
-        {/* This container sets up the two main columns */}
-        <div className="results-container results-container-flex">
-          
-          {/* This container acts as the first column, holding the heading and the prize cards */}
-          <div className="flex-column">
-            <h3 className="text-3xl font-bold mb-6 text-center md:text-left">Lottery Results</h3>
-            <div className="info-section">
-              {/* The prize cards are now arranged using a responsive grid defined in the CSS */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="container-flex">
+          {/* This container sets up the two main columns */}
+          <div className="results-container results-container-flex">
+            <div className="flex-column">
+              <h3>Lottery Results</h3>
+              <div className="info-section">
                 <InfoCard 
                   className="lucky-number-card" 
                   title="Lucky Number" 
@@ -136,24 +155,28 @@ function LuckyBilionaire() {
               </div>
             </div>
           </div>
-
-          {/* This is the second column for the new features */}
-          <div className="flex-column">
-            <h3>Join The Fun</h3>
-            <div className="current-prizes interaction-card">
-              <h3>CURRENT JACKPOT</h3>
-              <h3>14 ETH</h3>
+            {/* This is the second column for the new features */}
+            <div className="actions-container">
+              <h3>Be The Next Billionaire</h3>
+              <div className="current-prizes interaction-card">
+                <h3>CURRENT JACKPOT</h3>
+                <h3>14 ETH</h3>
+              </div>
+              {/* <div className="place-bet interaction-card">
+                <h3>PLACE YOUR BET</h3>
+                <input 
+                  type="number" 
+                  placeholder="1 - 50" 
+                  value={betNumber}
+                  onChange={(e) => setBetNumber(Number(e.target.value))}
+                />
+                <Bet betNumber={Number(betNumber)} />
+              </div>
+              <div className="withdraw-prize interaction-card">
+                <h3>ARE YOU A LUCKY WINNER?</h3>
+                <button className="withdraw-prize">Withdraw Prize!</button>
+              </div> */}
             </div>
-            <div className="place-bet interaction-card">
-              <h3>PLACE YOUR BET</h3>
-              <input type="text" placeholder="Chose a number from 1 - 50" />
-              <button className="bet-button">Bet 1 ETH</button>
-            </div>
-            <div className="withdraw-prize interaction-card">
-              <h3>ARE YOU A LUCKY WINNER?</h3>
-              <button className="withdraw-prize">Withdraw Prize!</button>
-            </div>
-          </div>
         </div>
       </div>
     </div>

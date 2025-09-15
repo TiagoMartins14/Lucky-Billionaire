@@ -1,0 +1,260 @@
+:root {
+  background: linear-gradient( #4a90e2, #ffd700, #ffd700, #4a90e2);
+  color: rgba(255, 255, 255, 0.87);
+  color-scheme: light dark;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-synthesis: none;
+  font-weight: 400;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+.lucky-bilionaire-container {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: -8px 5rem;
+  padding: 3rem;
+  background: linear-gradient(145deg, #2c2c2c, #2b2b2b);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+  color: #e0e0e0;
+  position: relative;
+  overflow: hidden;
+  animation: fadeIn 1s ease-in-out;
+}
+
+/* Glowing border effect for the container */
+.lucky-bilionaire-container ::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #4a90e2, #ffd700, #2c2c2c, #4a90e2);
+  background-size: 400% 400%;
+  z-index: -1;
+  border-radius: 22px;
+  animation: glowing-border 20s linear infinite;
+}
+
+.results-container-flex {
+display: flex;
+flex-direction: column;
+gap: 2rem;
+}
+
+@media (min-width: 768px) {
+.results-container-flex {
+flex-direction: row;
+}
+}
+
+.flex-column {
+flex: 1;
+}
+
+/* Main container with a modern, dark gradient background */
+.results-container {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  max-width: 900px;
+  margin: 50px auto;
+  padding: 3rem;
+  background: linear-gradient(145deg, #1c1c1c, #2b2b2b);
+  border-radius: 20px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+  color: #e0e0e0;
+  position: relative;
+  overflow: hidden;
+  animation: fadeIn 1s ease-in-out;
+}
+
+/* Keyframe for fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Glowing border effect for the container */
+.results-container ::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #4a90e2, #ffd700, #797878, #4a90e2);
+  background-size: 400% 400%;
+  z-index: -1;
+  border-radius: 22px;
+  animation: glowing-border 20s linear infinite;
+}
+
+@keyframes glowing-border {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Header with a subtle glow */
+.lucky-bilionaire-container h1{
+  text-align: center;
+  font-size: 4rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 0 10px #4a90e2;
+  margin-bottom: 2rem;
+  letter-spacing: 1.5px;
+}
+
+.lucky-bilionaire-container h3{
+  text-align: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 0 10px #4a90e2;
+  margin-bottom: 2rem;
+  letter-spacing: 1.5px;
+}
+
+/* Section containing all prize and winner cards */
+.info-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+/* Styling for individual cards */
+.info-card {
+  background: rgba(40, 40, 40, 0.8);
+  border-radius: 15px;
+  padding: 2rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease-in-out;
+  display: flex;
+  flex-direction: column;
+}
+
+.info-card:hover {
+  background: #a89b25;
+  transform: translateX(8px);
+  box-shadow: 0 10px 5px rgba(0, 0, 0, 0.4);
+}
+
+/* Titles within the cards */
+.info-card h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.interaction-card {
+  background: rgba(40, 40, 40, 0.8);
+  border-radius: 15px;
+  padding: 2rem;
+  margin: 2rem 0rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease-in-out;
+  display: flex;
+  flex-direction: column;
+}
+
+.interaction-card h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.interaction-card button {
+  background: linear-gradient(90deg, #ff9900, #ffd700, #ffd700, #ffd700, #ffd700, #ffd700, #ff9900);
+  color: #ffffff;
+  text-shadow:
+    -1px -1px 0 #91947b,  
+     1px -1px 0 #91947b,
+    -1px  1px 0 #91947b,
+     1px  1px 0 #91947b;
+  font-size: 1.5rem;
+  font-weight: 700;
+  border-radius: 7px;
+  padding: 1.2rem
+}
+
+.interaction-card input{
+  color: #ffd700;
+  font-size: 1.5rem;
+  font-weight: 700;
+  border-radius: 7px;
+  margin: 1rem;
+  width: 20%;
+  height: 2rem;
+  align-self: center;
+  text-align-last: center;
+}
+
+.interaction-card button:hover{
+  cursor:grab;
+}
+
+.interaction-card button:active{
+  cursor:grabbing;
+}
+
+/* Dynamic styling for different prize tiers */
+.lucky-number-card { border-left: 5px solid #4a90e2; }
+.winners-card { border-left: 5px solid #50b33c; }
+.first-prize-card { border-left: 5px solid #ffd700; }
+.second-prize-card { border-left: 5px solid #c0c0c0; }
+
+/* Styling for winner lists */
+.winner-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 10px;
+}
+
+.winner-address {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9rem;
+  color: #c0c0c0;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 8px 12px;
+  border-radius: 6px;
+  word-break: break-all;
+}
+
+.winner-address:hover {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* Loading and error messages */
+.status-message {
+  text-align: center;
+  font-size: 1.5rem;
+  color: #e0e0e0;
+  padding: 2rem;
+  background: rgba(40, 40, 40, 0.8);
+  border-radius: 10px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(74, 144, 226, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(74, 144, 226, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(74, 144, 226, 0); }
+}
+
+.error {
+  color: #ff6b6b;
+  text-shadow: 0 0 5px #ff6b6b;
+}
