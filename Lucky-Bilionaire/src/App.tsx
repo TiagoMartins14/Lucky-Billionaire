@@ -121,18 +121,12 @@ function LuckyBilionaire() {
           {/* This container sets up the two main columns */}
           <div className="results-container results-container-flex">
             <div className="flex-column">
-              <h3>Lottery Results</h3>
+              <h2>LOTTERY RESULTS</h2>
               <div className="info-section">
                 <InfoCard 
                   className="lucky-number-card" 
                   title="Lucky Number" 
                   message={lastWeekLuckyNumber?.toString() ?? "N/A"} 
-                />
-                
-                <InfoCard 
-                  className="first-prize-card" 
-                  title="First Prize Winners" 
-                  message={renderWinners(winnersExact)}
                 />
 
                 <InfoCard
@@ -140,11 +134,11 @@ function LuckyBilionaire() {
                   title="First Prize" 
                   message={`${lastWeekFirstPrize?.toString() ?? "N/A"} ETH`}
                 />
-                          
+
                 <InfoCard 
-                  className="second-prize-card" 
-                  title="Second Prize Winners" 
-                  message={renderWinners(secondPlaceWinners)}
+                  className="first-prize-card" 
+                  title="First Prize Winners" 
+                  message={renderWinners(winnersExact)}
                 />
 
                 <InfoCard 
@@ -152,12 +146,18 @@ function LuckyBilionaire() {
                   title="Second Prize" 
                   message={`${lastWeekSecondPrize?.toString() ?? "N/A"} ETH`}
                 />
+                          
+                <InfoCard 
+                  className="second-prize-card" 
+                  title="Second Prize Winners" 
+                  message={renderWinners(secondPlaceWinners)}
+                />
               </div>
             </div>
           </div>
             {/* This is the second column for the new features */}
             <div className="actions-container">
-              <h3>Be The Next Billionaire</h3>
+              <h2>BE THE NEXT BILIONAIRE</h2>
               <div className="current-prizes interaction-card">
                 <h3>CURRENT JACKPOT</h3>
                 <h3>14 ETH</h3>
