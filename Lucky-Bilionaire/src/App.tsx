@@ -4,7 +4,7 @@ import { useReadContract, useWriteContract } from 'wagmi';
 import { abi } from "./abi.ts";
 import './index.css';
 
-const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS as `0x${string}`;
+const CONTRACT_ADDRESS = import.meta.env.CONTRACT_ADDRESS as `0x${string}`;
 const MIN_LUCKY_NUMBER = 1;
 const MAX_LUCKY_NUMBER = 50;
 
@@ -119,48 +119,59 @@ function LuckyBilionaire() {
         </h1>
         <div className="container-flex">
           {/* This container sets up the two main columns */}
-          <div className="results-container results-container-flex">
-            <div className="flex-column">
-              <h2>LOTTERY RESULTS</h2>
-              <div className="info-section">
-                <InfoCard 
-                  className="lucky-number-card" 
-                  title="Lucky Number" 
-                  message={lastWeekLuckyNumber?.toString() ?? "N/A"} 
-                />
+          <div className="main-flex-column">
+            <h2>LOTTERY RESULTS</h2>
+            <div className="info-section">
+              <InfoCard 
+                className="info-card" 
+                title="Lucky Number" 
+                message={lastWeekLuckyNumber?.toString() ?? "N/A"} 
+              />
 
-                <InfoCard
-                  className="first-prize-card" 
-                  title="First Prize" 
-                  message={`${lastWeekFirstPrize?.toString() ?? "N/A"} ETH`}
-                />
+              <InfoCard
+                className="info-card" 
+                title="First Prize" 
+                message={`${lastWeekFirstPrize?.toString() ?? "N/A"} ETH`}
+              />
 
-                <InfoCard 
-                  className="first-prize-card" 
-                  title="First Prize Winners" 
-                  message={renderWinners(winnersExact)}
-                />
+              <InfoCard 
+                className="info-card" 
+                title="First Prize Winners" 
+                message={renderWinners(winnersExact)}
+              />
 
-                <InfoCard 
-                  className="second-prize-card" 
-                  title="Second Prize" 
-                  message={`${lastWeekSecondPrize?.toString() ?? "N/A"} ETH`}
-                />
-                          
-                <InfoCard 
-                  className="second-prize-card" 
-                  title="Second Prize Winners" 
-                  message={renderWinners(secondPlaceWinners)}
-                />
-              </div>
+              <InfoCard 
+                className="info-card" 
+                title="Second Prize" 
+                message={`${lastWeekSecondPrize?.toString() ?? "N/A"} ETH`}
+              />
+                        
+              <InfoCard 
+                className="info-card" 
+                title="Second Prize Winners" 
+                message={renderWinners(secondPlaceWinners)}
+              />
             </div>
           </div>
             {/* This is the second column for the new features */}
-            <div className="actions-container">
-              <h2>BE THE NEXT BILIONAIRE</h2>
-              <div className="current-prizes interaction-card">
-                <h3>CURRENT JACKPOT</h3>
-                <h3>14 ETH</h3>
+            <div className="main-flex-column">
+                <h2>BE THE NEXT BILIONAIRE</h2>
+              <div className="info-section">
+                <div className="info-card">
+                  <h3>CURRENT JACKPOT</h3>
+                  <p className="highlighted-text">14 ETH</p>
+                </div>
+              </div>
+              <div className="action-section">
+                <div className="action-card">
+                  <h3>PLACE YOUR BET!</h3>
+                  <input placeholder="1 - 50"></input>
+                  <button className="bet-button">BET</button>
+                </div>
+                <div className="action-card">
+                  <h3>ARE YOU A LUCKY WINNER?</h3>
+                  <button>WITHDRAW YOUR PRIZE!</button>
+                </div>
               </div>
               {/* <div className="place-bet interaction-card">
                 <h3>PLACE YOUR BET</h3>
