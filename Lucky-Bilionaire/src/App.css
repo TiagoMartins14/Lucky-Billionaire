@@ -1,0 +1,193 @@
+.App {
+	width: 100%;
+	height: 100vh;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	background-color: var(--bg);
+}
+
+ 
+
+[data-theme="dark-mode"] {
+	--bg-dark: oklch(0.1 0.1 56);
+	--bg: oklch(0.15 0.1 56);
+	--bg-light: oklch(0.2 0.1 56);
+	--text: oklch(0.96 0.1 56);
+	--text-muted: oklch(0.76 0.1 56);
+	--highlight: oklch(0.5 0.2 56);
+	--border: oklch(0.4 0.2 56);
+	--border-muted: oklch(0.3 0.2 56);
+	--primary: oklch(0.76 0.2 56);
+	--secondary: oklch(0.76 0.2 236);
+	--danger: oklch(0.7 0.2 30);
+	--warning: oklch(0.7 0.2 100);
+	--success: oklch(0.7 0.2 160);
+	--info: oklch(0.7 0.2 260);
+}
+
+#theme-switch {
+	height: 1.8rem;
+	width: 1.8rem;
+	padding: 0;
+	border-radius: 50%;
+	border-color: var(--border);
+	background-color: var(--bg-light);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	position: fixed;
+	top: 2rem;
+	right: 2rem;
+}
+
+#theme-switch svg {
+	fill: var(--text-muted);
+}
+
+#theme-switch svg:last-child {
+	display: none;
+}
+
+.dark-mode #theme-switch svg:first-child {
+	display: none;
+}
+
+.dark-mode #theme-switch svg:last-child {
+	display: block;
+}
+
+.lucky-bilionaire-container {
+	/* border: 1px dotted red; */
+	margin: 0px;
+	padding: 0rem 1rem;
+	text-align: center;
+	color: var(--highlight);
+	display: flex;
+	flex-direction: column;
+	gap: 2rem;
+}
+
+.lucky-bilionaire-container h1, h2, h3 {
+	color: var(--text);
+}
+
+.container-flex {
+	/* border: 4px dotted green; */
+	display: flex;
+	flex-basis: 50%;
+	margin: 0rem 20rem;
+}
+
+.main-flex-column {
+	color: var(--text-muted);
+	/* border: 4px solid blue; */
+	align-items: stretch;
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+}
+
+.info-section {
+	/* border: 4px solid red; */
+	padding: 0rem 1rem;
+	flex: 1;
+	flex-grow: 1;
+}
+
+.info-card {
+	margin: 1rem;
+	padding: 1rem ;
+	background: var(--bg);
+	border-radius: 1rem;
+	border: 1px solid var(--border-muted);
+	border-top: 1px solid var(--highlight);
+	box-shadow: 0px 2px 6px -2px black;
+}
+
+.info-card:hover{
+	background: linear-gradient(0deg, var(--bg), var(--bg-light));
+}
+
+.action-section {
+	/* border: 4px solid orange; */
+	padding: 0rem 1rem;
+	flex: 1;
+}
+
+.action-card {
+	border-radius: 1rem;
+	background: var(--bg);
+	border: 1px solid var(--border-muted);
+	border-top: 1px solid var(--highlight);
+	text-align: center;
+	margin: 1rem;
+	padding: 1rem;
+	box-shadow: 0px 2px 6px -2px black;
+}
+
+.action-card:hover{
+	background: linear-gradient(0deg, var(--bg), var(--bg-light));
+}
+
+.action-card input{
+	border-radius: 0.6rem 0rem 0rem 0.6rem;
+	background: var(--bg-dark);
+	border: 1px solid var(--border-muted);
+	border-top: 1px solid var(--highlight);
+	text-align: center;
+	font-size: 1rem;
+	margin: 1rem 0rem 1rem 1rem;
+	padding: 1rem;
+	width: 3rem;
+}
+
+.light-mode input {
+	border: 1px solid var(--border);
+}
+
+
+.action-card input:hover{
+	background: var(--bg-dark);
+}
+
+.action-card button {
+	border-radius: 0.6rem;
+	background: var(--primary);
+	border: 1px solid var(--border-muted);
+	border-top: 1px solid var(--highlight);
+	text-align: center;
+	font-size: 1rem;
+	margin: 1rem 1rem 1rem 0rem;
+	padding: 1rem;
+	cursor: pointer;
+}
+
+.light-mode .bet-button {
+	border: 1px solid var(--border);
+	border-left: none;
+}
+
+.action-card .bet-button {
+	border-radius: 0rem 0.6rem 0.6rem 0rem;
+}
+
+.action-card button:hover {
+	background: var(--secondary);
+}
+
+.action-card button:active {
+	cursor: grabbing;
+}
+
+.highlighted-text {
+	color: gold;
+	text-shadow: 0px 1px 3px black;
+	font-size: 2rem;
+	font-weight: 700;
+}
+
+.current-prizes {}
+
+.interaction-card {}
