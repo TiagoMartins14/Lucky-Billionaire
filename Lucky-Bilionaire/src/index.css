@@ -19,8 +19,8 @@
 	--danger: oklch(0.5 0.2 30);
 	--warning: oklch(0.5 0.2 100);
 	--success: oklch(0.5 0.2 160);
-	--info: oklch(0.5 0.2 260);background: var(--bg-dark);
-	background: var(--bg);
+	--info: oklch(0.5 0.2 260);
+	background: var(--bg-dark);
 	color: var(--text-muted);
 	border-color: var(--border);
 	color-scheme: light dark;
