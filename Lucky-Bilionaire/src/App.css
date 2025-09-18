@@ -50,11 +50,11 @@
 	display: none;
 }
 
-.dark-mode #theme-switch svg:first-child {
+[data-theme="dark-mode"] #theme-switch svg:first-child {
 	display: none;
 }
 
-.dark-mode #theme-switch svg:last-child {
+[data-theme="dark-mode"] #theme-switch svg:last-child {
 	display: block;
 }
 
