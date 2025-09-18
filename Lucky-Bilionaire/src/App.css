@@ -145,6 +145,9 @@
 
 .action-card input {
 	border: 1px solid var(--border);
+	width: 6rem;
+	color: var(--text-muted);
+	font-weight: 700;
 }
 
 

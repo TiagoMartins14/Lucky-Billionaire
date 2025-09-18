@@ -174,7 +174,7 @@ function LuckyBilionaire() {
                 <div className="action-section">
                   <div className="action-card">
                     <h3>PLACE YOUR BET!</h3>
-                    <input placeholder="1 - 50"></input>
+                    <input type="number" min={1} max={50} placeholder="1 - 50"></input>
                     <button className="bet-button">BET</button>
                   </div>
                   <div className="action-card withdraw">
