@@ -2,13 +2,11 @@ import { sepolia } from 'wagmi/chains';
 import { useReadContract, useWriteContract } from 'wagmi';
 import { abi } from "./abi.ts";
 import React, { useState } from "react";
-import { Toggle } from "./components/Togle.css"
+import { CONTRACT_ADDRESS, MAX_LUCKY_NUMBER, MIN_LUCKY_NUMBER} from "./constants.tsx"
+import { Bet } from "./components/BetButton.tsx"
+import { WithdrawPrize } from "./components/WthdrawPrize.tsx"
 
 import './App.css';
-
-const CONTRACT_ADDRESS = import.meta.env.CONTRACT_ADDRESS as `0x${string}`;
-const MIN_LUCKY_NUMBER = 1;
-const MAX_LUCKY_NUMBER = 50;
 
 // Reusable card component to display any piece of information
 const InfoCard = ({ className, title, message }) => (
@@ -172,15 +170,8 @@ function LuckyBilionaire() {
                   </div>
                 </div>
                 <div className="action-section">
-                  <div className="action-card">
-                    <h3>PLACE YOUR BET!</h3>
-                    <input type="number" min={1} max={50} placeholder="1 - 50"></input>
-                    <button className="bet-button">BET</button>
-                  </div>
-                  <div className="action-card withdraw">
-                    <h3>ARE YOU A LUCKY WINNER?</h3>
-                    <button>WITHDRAW YOUR PRIZE!</button>
-                  </div>
+                  <Bet/>
+                  <WithdrawPrize/>
                 </div>
                 {/* <div className="place-bet interaction-card">
                   <h3>PLACE YOUR BET</h3>
