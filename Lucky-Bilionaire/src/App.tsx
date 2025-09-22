@@ -1,9 +1,9 @@
 import { sepolia } from 'wagmi/chains';
-import { useReadContract, useWriteContract } from 'wagmi';
+import { useReadContract } from 'wagmi';
 import { abi } from "./abi.ts";
-import React, { useState } from "react";
+import { useState } from "react";
 import { CONTRACT_ADDRESS, MAX_LUCKY_NUMBER, MIN_LUCKY_NUMBER} from "./constants.tsx"
-import { Bet } from "./components/BetButton.tsx"
+import { Bet } from "./components/Bet.tsx"
 import { WithdrawPrize } from "./components/WthdrawPrize.tsx"
 
 import './App.css';

@@ -15,9 +15,9 @@ export function WithdrawPrize () {
 	};
 
 	const renderFeedback = () => {
-		if (isPending) return <p>Confirming your transaction</p>
-		if (isSuccess) return <p>Prize claimed successfully!</p>
-		if (isError) return <p>Error: {error?.message}</p>
+		if (isPending) return <p style= {{color: 'var(--warning)'}}>Confirming your transaction</p>
+		if (isSuccess) return <p style= {{color: 'var(--success)'}}>Prize claimed successfully!</p>
+		if (isError) return <p style= {{color: 'var(--danger)'}}>Error: {error?.message}</p>
 		return null;
 	}
 
