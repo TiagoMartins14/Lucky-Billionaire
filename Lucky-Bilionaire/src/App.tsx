@@ -109,6 +109,7 @@ function LuckyBilionaire() {
   // };
 
   // Combine winners for display
+  const firstPlaceWinners = winnersExact ?? [];
   const secondPlaceWinners = winnersBefore?.concat(winnersAfter ?? []) ?? [];
 
   return (
@@ -143,7 +144,7 @@ function LuckyBilionaire() {
                 <InfoCard 
                   className="info-card" 
                   title="First Prize Winners" 
-                  message={winnersExact !== undefined ? winnersExact.length.toString() : "No winners this week"}
+                  message={firstPlaceWinners ? firstPlaceWinners.length.toString() : "No winners this week"}
                 />
 
                 <InfoCard 
@@ -155,7 +156,7 @@ function LuckyBilionaire() {
                 <InfoCard 
                   className="info-card" 
                   title="Second Prize Winners" 
-                  message={secondPlaceWinners !== undefined ? secondPlaceWinners.length.toString() : "No winners this week"}
+                  message={secondPlaceWinners ? secondPlaceWinners.length.toString() : "No winners this week"}
                 />
               </div>
             </div>
