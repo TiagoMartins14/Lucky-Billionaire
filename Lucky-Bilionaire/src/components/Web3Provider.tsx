@@ -8,10 +8,10 @@ const config = createConfig(
         chains: [sepolia],
         transports: {
             [sepolia.id]: http(
-                `https://eth-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_ID}`
+                `https://eth-sepolia.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`
             ),
         },
-        walletConnectProjectId: process.env.PROJECT_ID,
+        walletConnectProjectId: process.env.NEXT_PUBLIC_PROJECT_ID,
 
         appName: "Lucky Bilionaire",
 
