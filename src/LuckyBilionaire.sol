@@ -187,11 +187,7 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
         emit MoneyWithdrawn(msg.sender, _amount);
     }
 
-    function getPlayersByNumberGuess(uint256 round, uint256 number)
-        external
-        view
-        returns (address[] memory players)
-    {
+    function getPlayersByNumberGuess(uint256 round, uint256 number) external view returns (address[] memory players) {
         return s_playersByNumberGuess[round][number];
     }
 
