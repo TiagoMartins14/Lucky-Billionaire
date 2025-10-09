@@ -39,7 +39,7 @@ import {ConfirmedOwner} from "@chainlink/v0.8/shared/access/ConfirmedOwner.sol";
 import {ReentrancyGuard} from "@openzeppelin/security/ReentrancyGuard.sol";
 import {Pausable} from "@openzeppelin/security/Pausable.sol";
 
-contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
+contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     /*//////////////////////////////////////////////////////////////
                             STATE VARIABLES
     //////////////////////////////////////////////////////////////*/
@@ -85,11 +85,11 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     /*//////////////////////////////////////////////////////////////
                                  ERRORS
     //////////////////////////////////////////////////////////////*/
-    error LuckyBilionaire__GuessOutOfRange();
-    error LuckyBilionaire__NoFundsToWithdraw();
-    error LuckyBilionaire__TransferFailed();
-    error LuckyBilionaire__IncorrectPaymentValue();
-    error LuckyBilionaire__NeedsToBeMoreThanZero();
+    error LuckyBillionaire__GuessOutOfRange();
+    error LuckyBillionaire__NoFundsToWithdraw();
+    error LuckyBillionaire__TransferFailed();
+    error LuckyBillionaire__IncorrectPaymentValue();
+    error LuckyBillionaire__NeedsToBeMoreThanZero();
 
     /*//////////////////////////////////////////////////////////////
                                FUNCTIONS
@@ -111,11 +111,11 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
      */
     function savePlayerGuess(uint256 _guess) external payable whenNotPaused {
         if (msg.value != 1 ether) {
-            revert LuckyBilionaire__IncorrectPaymentValue();
+            revert LuckyBillionaire__IncorrectPaymentValue();
         }
 
         if (_guess < MINIMUM_LUCKY_NUMBER || _guess > MAXIMUM_LUCKY_NUMBER) {
-            revert LuckyBilionaire__GuessOutOfRange();
+            revert LuckyBillionaire__GuessOutOfRange();
         }
 
         s_vault += VAULT_CUT;
@@ -136,10 +136,10 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
      * @notice Lucky Billionaire is paused between the announcement and the start of a new round.
      */
     function StartNewRound() external onlyOwner {
-        pauseLuckyBilionaire();
+        pauseLuckyBillionaire();
         distributePrizes();
         startNewRoundCleanUp();
-        resumeLuckyBilionaire();
+        resumeLuckyBillionaire();
     }
 
     /**
@@ -158,12 +158,12 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
             }
         }
         if (amount == 0) {
-            revert LuckyBilionaire__NoFundsToWithdraw();
+            revert LuckyBillionaire__NoFundsToWithdraw();
         }
 
         (bool success,) = msg.sender.call{value: amount}("");
         if (!success) {
-            revert LuckyBilionaire__TransferFailed();
+            revert LuckyBillionaire__TransferFailed();
         }
         emit PrizeClaimed(msg.sender, amount);
     }
@@ -173,16 +173,16 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
      */
     function withdraw(uint256 _amount) external onlyOwner {
         if (_amount <= 0) {
-            revert LuckyBilionaire__NeedsToBeMoreThanZero();
+            revert LuckyBillionaire__NeedsToBeMoreThanZero();
         }
 
         if (_amount > s_vault) {
-            revert LuckyBilionaire__NoFundsToWithdraw();
+            revert LuckyBillionaire__NoFundsToWithdraw();
         }
 
         (bool success,) = msg.sender.call{value: _amount}("");
         if (!success) {
-            revert LuckyBilionaire__TransferFailed();
+            revert LuckyBillionaire__TransferFailed();
         }
         emit MoneyWithdrawn(msg.sender, _amount);
     }
@@ -474,14 +474,14 @@ contract LuckyBilionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     /**
      * @notice Sets the status of pause to true.
      */
-    function pauseLuckyBilionaire() internal {
+    function pauseLuckyBillionaire() internal {
         _pause();
     }
 
     /**
      * @notice Sets the status of pause to false.
      */
-    function resumeLuckyBilionaire() internal {
+    function resumeLuckyBillionaire() internal {
         _unpause();
     }
 }

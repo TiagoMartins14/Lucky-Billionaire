@@ -3,7 +3,7 @@
     {
       "hash": "0x60c7230b12c3060e133e13b73b951d1922f0fd99c2a8a38f00f7874aa94f8e24",
       "transactionType": "CREATE",
-      "contractName": "LuckyBilionaire",
+      "contractName": "LuckyBillionaire",
       "contractAddress": "0xfcc7d7f98fc3e1587bc4759a2467dea5deb8a358",
       "function": null,
       "arguments": [

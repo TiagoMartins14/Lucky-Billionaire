@@ -2,19 +2,19 @@
 pragma solidity ^0.8.19;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {LuckyBilionaireTestHelper} from "test/helper/LuckyBilionaireTestHelper.t.sol";
+import {LuckyBillionaireTestHelper} from "test/helper/LuckyBillionaireTestHelper.t.sol";
 import {VRFCoordinatorV2_5Mock} from "@chainlink/v0.8/vrf/test/VRFCoordinatorV2_5Mock.t.sol";
 
-contract LuckyBilionaireTest is Test {
+contract LuckyBillionaireTest is Test {
     VRFCoordinatorV2_5Mock private vrfCoordinator;
-    LuckyBilionaireTestHelper private lucky;
+    LuckyBillionaireTestHelper private lucky;
     bytes32 private constant KEY_HASH = bytes32(uint256(123456));
     uint256 private subId;
 
     function setUp() public {
         vrfCoordinator = new VRFCoordinatorV2_5Mock(0.002 ether, 40 gwei, 0.004 ether); // Same params Chainlink uses in its tests
         subId = vrfCoordinator.createSubscription();
-        lucky = new LuckyBilionaireTestHelper(address(vrfCoordinator), KEY_HASH, subId);
+        lucky = new LuckyBillionaireTestHelper(address(vrfCoordinator), KEY_HASH, subId);
 
         vrfCoordinator.fundSubscription(subId, 10000 ether);
         vrfCoordinator.addConsumer(subId, address(lucky));
@@ -25,11 +25,11 @@ contract LuckyBilionaireTest is Test {
     /*//////////////////////////////////////////////////////////////
                                  ERRORS
     //////////////////////////////////////////////////////////////*/
-    error LuckyBilionaire__GuessOutOfRange();
-    error LuckyBilionaire__NoFundsToWithdraw();
-    error LuckyBilionaire__TransferFailed();
-    error LuckyBilionaire__IncorrectPaymentValue();
-    error LuckyBilionaire__NeedsToBeMoreThanZero();
+    error LuckyBillionaire__GuessOutOfRange();
+    error LuckyBillionaire__NoFundsToWithdraw();
+    error LuckyBillionaire__TransferFailed();
+    error LuckyBillionaire__IncorrectPaymentValue();
+    error LuckyBillionaire__NeedsToBeMoreThanZero();
 
     /*//////////////////////////////////////////////////////////////
                             HELPER FUNCTIONS
@@ -98,7 +98,7 @@ contract LuckyBilionaireTest is Test {
         address player = makeAddr("player");
         vm.deal(player, 1 ether);
         vm.startPrank(player);
-        vm.expectRevert(LuckyBilionaire__GuessOutOfRange.selector);
+        vm.expectRevert(LuckyBillionaire__GuessOutOfRange.selector);
         lucky.savePlayerGuess{value: 1 ether}(_guess);
         vm.stopPrank();
     }
@@ -110,7 +110,7 @@ contract LuckyBilionaireTest is Test {
         if (_value != lucky.BET_COST()) {
             vm.deal(player, 100 ether);
             vm.startPrank(player);
-            vm.expectRevert(LuckyBilionaire__IncorrectPaymentValue.selector);
+            vm.expectRevert(LuckyBillionaire__IncorrectPaymentValue.selector);
             lucky.savePlayerGuess{value: _value}(_guess);
             vm.stopPrank();
         }
@@ -359,7 +359,7 @@ contract LuckyBilionaireTest is Test {
                 uint256 playerBalanceAfter = currentPlayer.balance;
                 assertEq(playerBalanceAfter, playerBalanceBefore + amountWon);
             } else {
-                vm.expectRevert(LuckyBilionaire__NoFundsToWithdraw.selector);
+                vm.expectRevert(LuckyBillionaire__NoFundsToWithdraw.selector);
                 lucky.claimPrize();
             }
             vm.stopPrank();
@@ -404,11 +404,11 @@ contract LuckyBilionaireTest is Test {
         address player = makeAddr("player");
         uint256 betCost = lucky.BET_COST();
         vm.deal(player, 1 ether);
-        lucky.exposedPauseLuckyBilionaire();
+        lucky.exposedPauseLuckyBillionaire();
         vm.prank(player);
         vm.expectRevert("Pausable: paused");
         lucky.savePlayerGuess{value: betCost}(_luckyNumber);
-        lucky.exposedResumeLuckyBilionaire();
+        lucky.exposedResumeLuckyBillionaire();
         vm.prank(player);
         lucky.savePlayerGuess{value: betCost}(_luckyNumber);
     }
@@ -430,14 +430,14 @@ contract LuckyBilionaireTest is Test {
     }
 
     function testCannotWithdrawZeroAmount() public {
-        vm.expectRevert(LuckyBilionaire__NeedsToBeMoreThanZero.selector);
+        vm.expectRevert(LuckyBillionaire__NeedsToBeMoreThanZero.selector);
         lucky.withdraw(0);
     }
 
     function testWithdrawRevertWhenNoFundsToWithdraw(uint256 _amount) public {
         vm.assume(_amount > 0);
         lucky.setVault(0);
-        vm.expectRevert(LuckyBilionaire__NoFundsToWithdraw.selector);
+        vm.expectRevert(LuckyBillionaire__NoFundsToWithdraw.selector);
         lucky.withdraw(1 ether);
     }
 }

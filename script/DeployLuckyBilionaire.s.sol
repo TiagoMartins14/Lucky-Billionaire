@@ -2,16 +2,16 @@
 pragma solidity ^0.8.19;
 
 import {Script} from "forge-std/Script.sol";
-import {LuckyBilionaire} from "src/LuckyBilionaire.sol";
+import {LuckyBillionaire} from "src/LuckyBillionaire.sol";
 
-contract DeployLuckyBilionaire is Script {
+contract DeployLuckyBillionaire is Script {
     function run() external {
         address vrfCoordinator = vm.envAddress("VRF_COORDINATOR");
         bytes32 keyHash = vm.envBytes32("KEY_HASH");
         uint256 subId = vm.envUint("SUB_ID");
 
         vm.startBroadcast();
-        new LuckyBilionaire(vrfCoordinator, keyHash, subId);
+        new LuckyBillionaire(vrfCoordinator, keyHash, subId);
         vm.stopBroadcast();
     }
 }

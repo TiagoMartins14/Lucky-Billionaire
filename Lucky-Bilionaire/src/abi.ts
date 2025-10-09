@@ -194,7 +194,7 @@ export const abi = [
 				{
 					"name": "prizes",
 					"type": "tuple[]",
-					"internalType": "struct LuckyBilionaire.prize[]",
+					"internalType": "struct LuckyBillionaire.prize[]",
 					"components": [
 						{
 							"name": "amountWon",
@@ -741,27 +741,27 @@ export const abi = [
 		},
 		{
 			"type": "error",
-			"name": "LuckyBilionaire__GuessOutOfRange",
+			"name": "LuckyBillionaire__GuessOutOfRange",
 			"inputs": []
 		},
 		{
 			"type": "error",
-			"name": "LuckyBilionaire__IncorrectPaymentValue",
+			"name": "LuckyBillionaire__IncorrectPaymentValue",
 			"inputs": []
 		},
 		{
 			"type": "error",
-			"name": "LuckyBilionaire__NeedsToBeMoreThanZero",
+			"name": "LuckyBillionaire__NeedsToBeMoreThanZero",
 			"inputs": []
 		},
 		{
 			"type": "error",
-			"name": "LuckyBilionaire__NoFundsToWithdraw",
+			"name": "LuckyBillionaire__NoFundsToWithdraw",
 			"inputs": []
 		},
 		{
 			"type": "error",
-			"name": "LuckyBilionaire__TransferFailed",
+			"name": "LuckyBillionaire__TransferFailed",
 			"inputs": []
 		},
 		{

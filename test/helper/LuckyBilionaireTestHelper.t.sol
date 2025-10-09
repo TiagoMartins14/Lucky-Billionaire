@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {LuckyBilionaire} from "src/LuckyBilionaire.sol";
+import {LuckyBillionaire} from "src/LuckyBillionaire.sol";
 
-contract LuckyBilionaireTestHelper is LuckyBilionaire {
+contract LuckyBillionaireTestHelper is LuckyBillionaire {
     uint256 public constant EXPOSED_HOUSE_COMISSION = 5; // 5%
     uint256 public constant EXPOSED_MINIMUM_LUCKY_NUMBER = 1;
     uint256 public constant EXPOSED_MAXIMUM_LUCKY_NUMBER = 50;
@@ -12,7 +12,7 @@ contract LuckyBilionaireTestHelper is LuckyBilionaire {
     uint256 public s_exposedVault;
 
     constructor(address _vrfCoordinator, bytes32 _keyHash, uint256 _subId)
-        LuckyBilionaire(_vrfCoordinator, _keyHash, _subId)
+        LuckyBillionaire(_vrfCoordinator, _keyHash, _subId)
     {}
 
     /*//////////////////////////////////////////////////////////////
@@ -65,12 +65,12 @@ contract LuckyBilionaireTestHelper is LuckyBilionaire {
         startNewRoundCleanUp();
     }
 
-    function exposedPauseLuckyBilionaire() external {
-        pauseLuckyBilionaire();
+    function exposedPauseLuckyBillionaire() external {
+        pauseLuckyBillionaire();
     }
 
-    function exposedResumeLuckyBilionaire() external {
-        resumeLuckyBilionaire();
+    function exposedResumeLuckyBillionaire() external {
+        resumeLuckyBillionaire();
     }
 
     /*//////////////////////////////////////////////////////////////

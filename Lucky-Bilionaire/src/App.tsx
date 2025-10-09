@@ -26,7 +26,7 @@ function renderWinners(winners: readonly `0x${string}`[] | undefined) {
   );
 }
 
-function LuckyBilionaire() {
+function LuckyBillionaire() {
   const { data: currentRound, isLoading: isCurrentRoundLoading, isError: isCurrentRoundError } = useReadContract({
     abi, address: CONTRACT_ADDRESS, functionName: 'getRound', chainId: sepolia.id,
   });
@@ -176,4 +176,4 @@ function LuckyBilionaire() {
   );
 }
 
-export default LuckyBilionaire;
+export default LuckyBillionaire;
