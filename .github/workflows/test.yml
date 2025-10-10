@@ -29,30 +29,9 @@ jobs:
           forge fmt --check
         id: fmt
 
-      - name: Run Forge build and check sizes
+      - name: Run Forge build
         run: |
-          forge build --sizes &> build-output.log || true
-
-          echo "--- Full Build Output ---"
-          cat build-output.log
-          echo "-------------------------"
-
-          if grep -q "Error: some contracts exceed the runtime size limit" build-output.log; then
-            echo "Size limit error detected. Checking which contract is oversized."
-
-            if grep -E "^\|" build-output.log | grep -v "Contract" | grep -v "===" | grep -v "VRFCoordinatorV2_5" | grep -q -- "-"; then
-              echo "::error::Build failed: One of YOUR contracts exceeds the 24.576 kB size limit."
-              exit 1
-            else
-              echo "Oversized contract is a known dependency. Ignoring error as planned. ✅"
-            fi
-
-          elif ! grep -q "Compiler run successful" build-output.log; then
-              echo "::error::Build failed for a reason other than contract size."
-              exit 1
-          else
-              echo "Build and size check successful. ✅"
-          fi
+          forge build --sizes
         id: build
 
       - name: Run Forge tests
