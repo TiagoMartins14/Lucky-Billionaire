@@ -40,7 +40,7 @@ jobs:
           if grep -q "Error: some contracts exceed the runtime size limit" build-output.log; then
             echo "Size limit error detected. Checking which contract is oversized."
 
-            if grep -E "^\|" build-output.log | grep -v "VRFCoordinatorV2_5" | grep -q -- "-"; then
+            if grep -E "^\|" build-output.log | grep -v "Contract" | grep -v "===" | grep -v "VRFCoordinatorV2_5" | grep -q -- "-"; then
               echo "::error::Build failed: One of YOUR contracts exceeds the 24.576 kB size limit."
               exit 1
             else
