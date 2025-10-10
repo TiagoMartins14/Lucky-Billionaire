@@ -29,9 +29,38 @@ jobs:
           forge fmt --check
         id: fmt
 
-      - name: Run Forge build
+      - name: Run Forge build and check sizes
         run: |
-          forge build src/LuckyBillionaire.sol --sizes
+          # 1. Run forge build, redirect all output to a log file, and use `|| true` 
+          #    so this step doesn't fail immediately if the build has an error.
+          forge build --sizes &> build-output.log || true
+
+          # 2. Print the full build output to the CI logs so you can always see it.
+          echo "--- Full Build Output ---"
+          cat build-output.log
+          echo "-------------------------"
+
+          # 3. Check if the specific "exceed the runtime size limit" error exists.
+          if grep -q "Error: some contracts exceed the runtime size limit" build-output.log; then
+            echo "Size limit error detected. Checking which contract is oversized."
+
+            # 4. Check if any contract *other than* the known large dependency is oversized.
+            #    - `grep -v "VRFCoordinatorV2_5"` EXCLUDES the Chainlink contract from our check.
+            #    - `grep -q -- "-"` then checks if any of the remaining lines have a negative margin.
+            if grep -E "^\|" build-output.log | grep -v "VRFCoordinatorV2_5" | grep -q -- "-"; then
+              echo "::error::Build failed: One of YOUR contracts exceeds the 24.576 kB size limit."
+              exit 1
+            else
+              echo "Oversized contract is a known dependency. Ignoring error as planned. ✅"
+            fi
+
+          # 5. If there was no size error, check for other compilation errors.
+          elif ! grep -q "Compiler run successful" build-output.log; then
+              echo "::error::Build failed for a reason other than contract size."
+              exit 1
+          else
+              echo "Build and size check successful. ✅"
+          fi
         id: build
 
       - name: Run Forge tests
