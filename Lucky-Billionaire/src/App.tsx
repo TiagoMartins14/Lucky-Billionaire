@@ -113,9 +113,9 @@ function LuckyBillionaire() {
   return (
       <div className="App" data-theme={isDark ? "dark-mode" : null}>
         <ThemeSwitch isDark={isDark} setIsDark={setIsDark} />
-        {/* <div className="connect-wallet">
+        <div className="connect-wallet">
           <ConnectWallet />
-        </div> */}
+        </div>
 
         {/*Seguir docs do REOWN */}
         <div className="lucky-bilionaire-container">
