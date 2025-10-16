@@ -3,13 +3,25 @@ import { useReadContract } from 'wagmi';
 import { abi } from "./abi.ts";
 import { useState } from "react";
 import { CONTRACT_ADDRESS, MAX_LUCKY_NUMBER, MIN_LUCKY_NUMBER} from "./constants.tsx"
-import { Bet } from "./components/Bet.tsx"
-import { InfoCard } from './components/InfoCard.tsx';
-import { WithdrawPrize } from "./components/WthdrawPrize.tsx"
-import { ConnectWallet } from './components/ConnectWallet.tsx';
-import { ThemeSwitch } from './components/ThemeSwitch.tsx';
+import { Bet } from "./components/bet.tsx"
+import { InfoCard } from './components/info-card.tsx';
+import { WithdrawPrize } from "./components/wthdraw-prize.tsx"
+import { ThemeSwitch } from './components/theme-switch.tsx';
+import { ConnectWalletButton } from './components/connect-wallet.tsx'
+// import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+// import { WagmiProvider, useAccount } from 'wagmi'
+// import { config } from './config.tsx'
+// import { Account } from './utils/account.tsx'
+// import { WalletOptions } from './utils/wallet-options.tsx'
+import './app.css';
 
-import './App.css';
+// const queryClient = new QueryClient()
+
+// function ConnectWallet() {
+//   const { isConnected } = useAccount()
+//   if (isConnected) return <Account />
+//   return <WalletOptions />
+// }
 
 // Reusable function to render winner addresses
 function renderWinners(winners: readonly `0x${string}`[] | undefined) {
@@ -111,68 +123,64 @@ function LuckyBillionaire() {
   const secondPlaceWinners = winnersBefore?.concat(winnersAfter ?? []) ?? [];
 
   return (
-      <div className="App" data-theme={isDark ? "dark-mode" : null}>
-        <ThemeSwitch isDark={isDark} setIsDark={setIsDark} />
-        <div className="connect-wallet">
-          <ConnectWallet />
-        </div>
+    <div className="App" data-theme={isDark ? "dark-mode" : null}>
+      <ThemeSwitch isDark={isDark} setIsDark={setIsDark} />
+      <ConnectWalletButton />
+      <div className="lucky-bilionaire-container">
+        <h1>
+          LUCKY BILIONAIRE
+        </h1>
+        <div className="container-flex">
+          <div className="main-flex-column">
+            <h2>LOTTERY RESULTS</h2>
+            <div className="info-section">
+              <InfoCard 
+                className="info-card" 
+                title="Lucky Number" 
+                message={lastWeekLuckyNumber?.toString() ?? "N/A"} 
+              />
 
-        {/*Seguir docs do REOWN */}
-        <div className="lucky-bilionaire-container">
-          <h1>
-            LUCKY BILIONAIRE
-          </h1>
-          <div className="container-flex">
+              <InfoCard
+                className="info-card" 
+                title="First Prize" 
+                message={`${lastWeekFirstPrize?.toString() ?? "N/A"} ETH`}
+              />
+
+              <InfoCard 
+                className="info-card" 
+                title="First Prize Winners" 
+                message={firstPlaceWinners ? firstPlaceWinners.length.toString() : "No winners this week"}
+              />
+
+              <InfoCard 
+                className="info-card" 
+                title="Second Prize" 
+                message={`${lastWeekSecondPrize?.toString() ?? "N/A"} ETH`}
+              />
+                        
+              <InfoCard 
+                className="info-card" 
+                title="Second Prize Winners" 
+                message={secondPlaceWinners ? secondPlaceWinners.length.toString() : "No winners this week"}
+              />
+            </div>
+          </div>
             <div className="main-flex-column">
-              <h2>LOTTERY RESULTS</h2>
+                <h2>BE THE NEXT BILIONAIRE</h2>
               <div className="info-section">
-                <InfoCard 
-                  className="info-card" 
-                  title="Lucky Number" 
-                  message={lastWeekLuckyNumber?.toString() ?? "N/A"} 
-                />
-
-                <InfoCard
-                  className="info-card" 
-                  title="First Prize" 
-                  message={`${lastWeekFirstPrize?.toString() ?? "N/A"} ETH`}
-                />
-
-                <InfoCard 
-                  className="info-card" 
-                  title="First Prize Winners" 
-                  message={firstPlaceWinners ? firstPlaceWinners.length.toString() : "No winners this week"}
-                />
-
-                <InfoCard 
-                  className="info-card" 
-                  title="Second Prize" 
-                  message={`${lastWeekSecondPrize?.toString() ?? "N/A"} ETH`}
-                />
-                          
-                <InfoCard 
-                  className="info-card" 
-                  title="Second Prize Winners" 
-                  message={secondPlaceWinners ? secondPlaceWinners.length.toString() : "No winners this week"}
-                />
+                <div className="info-card">
+                  <h3>CURRENT JACKPOT</h3>
+                  <p className="highlighted-text">14 ETH</p>
+                </div>
+              </div>
+              <div className="action-section">
+                <Bet/>
+                <WithdrawPrize/>
               </div>
             </div>
-              <div className="main-flex-column">
-                  <h2>BE THE NEXT BILIONAIRE</h2>
-                <div className="info-section">
-                  <div className="info-card">
-                    <h3>CURRENT JACKPOT</h3>
-                    <p className="highlighted-text">14 ETH</p>
-                  </div>
-                </div>
-                <div className="action-section">
-                  <Bet/>
-                  <WithdrawPrize/>
-                </div>
-              </div>
-          </div>
         </div>
       </div>
+    </div>
   );
 }
 

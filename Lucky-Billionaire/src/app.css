@@ -58,6 +58,54 @@
 	display: block;
 }
 
+#connect-wallet {
+	height: auto;
+	width: auto;
+	margin: 1rem;
+	padding: 1rem ;
+	background: var(--bg);
+	border-radius: 1rem;
+	border: 1px solid var(--border-muted);
+	border-top: 1px solid var(--highlight);
+	box-shadow: 0px 2px 6px -2px black;
+	position: fixed;
+	top: 0rem;
+	right: 20rem;
+
+}#connect-wallet-button {
+	height: 3.3rem;
+	width: auto;
+	margin: 1rem;
+	padding: 1rem ;
+	font-size: 1rem;
+	color: var(--text);
+	background: var(--bg);
+	border-radius: 1rem;
+	border: 1px solid var(--border-muted);
+	border-top: 1px solid var(--highlight);
+	box-shadow: 0px 2px 6px -2px black;
+	position: fixed;
+	top: 0.5rem;
+	right: 5rem;
+}
+
+#wallet-address {
+	height: 3.3rem;
+	width: auto;
+	margin: 1rem;
+	padding: 1rem ;
+	color: var(--text);
+	background: var(--bg);
+	border-radius: 1rem;
+	border: 1px solid var(--border-muted);
+	border-top: 1px solid var(--highlight);
+	box-shadow: 0px 2px 6px -2px black;
+	position: fixed;
+	top: 0.5rem;
+	right: 14rem;
+
+}
+
 .lucky-bilionaire-container {
 	/* border: 1px dotted red; */
 	margin: 0px;
