@@ -9,8 +9,6 @@ export function Account() {
   return (
     <div>
       {ensAvatar && <img alt="ENS Avatar" src={ensAvatar} />}
-      {/* {address && <div>{ensName ? `${ensName} (${address})` : address}</div>} */}
-      {/* <button id="connect-wallet-button" onClick={() => disconnect()}>Disconnect</button> */}
       <p id="connect-wallet-button">{address}</p>
     </div>
   )

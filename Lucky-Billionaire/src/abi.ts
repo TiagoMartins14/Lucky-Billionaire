@@ -108,19 +108,6 @@ export const abi = [
 		},
 		{
 			"type": "function",
-			"name": "getLastLuckyNumber",
-			"inputs": [],
-			"outputs": [
-				{
-					"name": "",
-					"type": "uint256",
-					"internalType": "uint256"
-				}
-			],
-			"stateMutability": "view"
-		},
-		{
-			"type": "function",
 			"name": "getLastSecondPrize",
 			"inputs": [],
 			"outputs": [
@@ -334,19 +321,6 @@ export const abi = [
 		{
 			"type": "function",
 			"name": "s_lastFirstPrize",
-			"inputs": [],
-			"outputs": [
-				{
-					"name": "",
-					"type": "uint256",
-					"internalType": "uint256"
-				}
-			],
-			"stateMutability": "view"
-		},
-		{
-			"type": "function",
-			"name": "s_lastLuckyNumber",
 			"inputs": [],
 			"outputs": [
 				{

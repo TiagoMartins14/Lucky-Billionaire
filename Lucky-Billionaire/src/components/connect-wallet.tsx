@@ -14,12 +14,10 @@ function ConnectWallet() {
 
 export function ConnectWalletButton () {
 	return (
-		// <div id="wallet-address">
 			<WagmiProvider config={config}>
 				<QueryClientProvider client={queryClient}>
 						<ConnectWallet />
 				</QueryClientProvider> 
 			</WagmiProvider>
-		// </div>
 	)
 }
