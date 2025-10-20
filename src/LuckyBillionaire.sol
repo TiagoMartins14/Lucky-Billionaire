@@ -46,7 +46,7 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     uint256 private constant HOUSE_COMISSION = 5; // 5%
     uint256 public constant FIRST_WIN_PERCENTAGE = 80; // 80%
     uint256 public constant SECOND_WIN_PERCENTAGE = 20; // 15%
-    uint256 public constant BET_COST = 1e18 wei; // 1 ether
+    uint256 public constant BET_COST = 1e16 wei; // 0.01 ether
     uint256 private constant VAULT_CUT = (BET_COST * HOUSE_COMISSION) / 100;
     uint256 private constant MINIMUM_LUCKY_NUMBER = 1;
     uint256 private constant MAXIMUM_LUCKY_NUMBER = 50;
@@ -110,7 +110,7 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
      * @param _guess The player's guess. A number within MINIMUM_LUCKY_NUMBER and MAXIMUM_LUCKY_NUMBER.
      */
     function savePlayerGuess(uint256 _guess) external payable whenNotPaused {
-        if (msg.value != 1 ether) {
+        if (msg.value != BET_COST) {
             revert LuckyBillionaire__IncorrectPaymentValue();
         }
 
