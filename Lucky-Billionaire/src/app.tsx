@@ -8,22 +8,9 @@ import { InfoCard } from './components/info-card.tsx';
 import { WithdrawPrize } from "./components/wthdraw-prize.tsx"
 import { ThemeSwitch } from './components/theme-switch.tsx';
 import { ConnectWalletButton } from './components/connect-wallet.tsx'
-// import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-// import { WagmiProvider, useAccount } from 'wagmi'
-// import { config } from './config.tsx'
-// import { Account } from './utils/account.tsx'
-// import { WalletOptions } from './utils/wallet-options.tsx'
+import { formatEther } from "viem";
 import './app.css';
 
-// const queryClient = new QueryClient()
-
-// function ConnectWallet() {
-//   const { isConnected } = useAccount()
-//   if (isConnected) return <Account />
-//   return <WalletOptions />
-// }
-
-// Reusable function to render winner addresses
 function renderWinners(winners: readonly `0x${string}`[] | undefined) {
   if (!winners || winners.length === 0) {
     return <div>No winners this week.</div>;
@@ -39,59 +26,126 @@ function renderWinners(winners: readonly `0x${string}`[] | undefined) {
 }
 
 function LuckyBillionaire() {
+  const [isDark, setIsDark] = useState(false);
+
   const { data: currentRound, isLoading: isCurrentRoundLoading, isError: isCurrentRoundError } = useReadContract({
-    abi, address: CONTRACT_ADDRESS, functionName: 'getRound', chainId: sepolia.id,
-  });
-  const previousRound = currentRound ? currentRound - 1n : undefined;
-  
-  const { data: lastWeekLuckyNumber, isLoading: isLuckyNumberLoading, isError: isLuckyNumberError } = useReadContract({
-    abi, address: CONTRACT_ADDRESS, functionName: 'getLuckyNumber',
-    args: previousRound !== undefined ? [previousRound] : undefined,
-    chainId: sepolia.id, query: { enabled: previousRound !== undefined },
+    abi,
+    address: CONTRACT_ADDRESS,
+    functionName: 'getRound',
+    chainId: sepolia.id,
   });
 
-  const { data: lastWeekFirstPrize, isLoading: isFirstPrizeLoading } = useReadContract({
-    abi, address: CONTRACT_ADDRESS, functionName: 'getLastFirstPrize', chainId: sepolia.id,
+  const previousRound = currentRound ? currentRound - 1n : undefined;
+
+  const { data: lastWeekLuckyNumber, isLoading: isLuckyNumberLoading, isError: isLuckyNumberError } = useReadContract({
+    abi,
+    address: CONTRACT_ADDRESS,
+    functionName: 'getLuckyNumber',
+    args: previousRound !== undefined ? [previousRound] : undefined,
+    chainId: sepolia.id,
+    query: { enabled: previousRound !== undefined },
+  });
+
+  const { data: firstPrize, isLoading: isFirstPrizeLoading } = useReadContract({
+    abi,
+    address: CONTRACT_ADDRESS,
+    functionName: 'getFirstPrize',
+    chainId: sepolia.id,
+  });
+
+  const firstPrizeInEther = firstPrize ? formatEther(BigInt(firstPrize)) : "0";
+
+  const { data: lastWeekFirstPrize, isLoading: isLastWeekFirstPrizeLoading } = useReadContract({
+    abi,
+    address: CONTRACT_ADDRESS,
+    functionName: 'getLastFirstPrize',
+    chainId: sepolia.id,
   });
 
   const { data: lastWeekSecondPrize, isLoading: isSecondPrizeLoading } = useReadContract({
-    abi, address: CONTRACT_ADDRESS, functionName: 'getLastSecondPrize', chainId: sepolia.id,
+    abi,
+    address: CONTRACT_ADDRESS,
+    functionName: 'getLastSecondPrize',
+    chainId: sepolia.id,
   });
 
   const { data: winnersExact, isLoading: isWinnersExactLoading, isError: isWinnersExactError } = useReadContract({
-    abi, address: CONTRACT_ADDRESS, functionName: 'getPlayersByNumberGuess',
-    args: (previousRound !== undefined && lastWeekLuckyNumber !== undefined) ? [previousRound, lastWeekLuckyNumber] : undefined,
-    chainId: sepolia.id, query: { enabled: previousRound !== undefined && lastWeekLuckyNumber !== undefined },
+    abi,
+    address: CONTRACT_ADDRESS,
+    functionName: 'getPlayersByNumberGuess',
+    args:
+      previousRound !== undefined && lastWeekLuckyNumber !== undefined
+        ? [previousRound, lastWeekLuckyNumber]
+        : undefined,
+    chainId: sepolia.id,
+    query: { enabled: previousRound !== undefined && lastWeekLuckyNumber !== undefined },
   });
 
-  const lastLuckyNumberNum = typeof lastWeekLuckyNumber === 'bigint' ? Number(lastWeekLuckyNumber) : undefined;
-  const luckyNumberBefore = lastLuckyNumberNum !== undefined ? (lastLuckyNumberNum === MIN_LUCKY_NUMBER ? MAX_LUCKY_NUMBER : lastLuckyNumberNum - 1) : undefined;
-  const luckyNumberAfter = lastLuckyNumberNum !== undefined ? (lastLuckyNumberNum === MAX_LUCKY_NUMBER ? MIN_LUCKY_NUMBER : lastLuckyNumberNum + 1) : undefined;
+  const lastLuckyNumberNum =
+    typeof lastWeekLuckyNumber === 'bigint' ? Number(lastWeekLuckyNumber) : undefined;
+
+  const luckyNumberBefore =
+    lastLuckyNumberNum !== undefined
+      ? lastLuckyNumberNum === MIN_LUCKY_NUMBER
+        ? MAX_LUCKY_NUMBER
+        : lastLuckyNumberNum - 1
+      : undefined;
+
+  const luckyNumberAfter =
+    lastLuckyNumberNum !== undefined
+      ? lastLuckyNumberNum === MAX_LUCKY_NUMBER
+        ? MIN_LUCKY_NUMBER
+        : lastLuckyNumberNum + 1
+      : undefined;
 
   const { data: winnersBefore, isLoading: isWinnersBeforeLoading } = useReadContract({
-    abi, address: CONTRACT_ADDRESS, functionName: 'getPlayersByNumberGuess',
-    args: (previousRound !== undefined && luckyNumberBefore !== undefined) ? [previousRound, BigInt(luckyNumberBefore)] : undefined,
-    chainId: sepolia.id, query: { enabled: previousRound !== undefined && luckyNumberBefore !== undefined },
+    abi,
+    address: CONTRACT_ADDRESS,
+    functionName: 'getPlayersByNumberGuess',
+    args:
+      previousRound !== undefined && luckyNumberBefore !== undefined
+        ? [previousRound, BigInt(luckyNumberBefore)]
+        : undefined,
+    chainId: sepolia.id,
+    query: { enabled: previousRound !== undefined && luckyNumberBefore !== undefined },
   });
 
   const { data: winnersAfter, isLoading: isWinnersAfterLoading } = useReadContract({
-    abi, address: CONTRACT_ADDRESS, functionName: 'getPlayersByNumberGuess',
-    args: (previousRound !== undefined && luckyNumberAfter !== undefined) ? [previousRound, BigInt(luckyNumberAfter)] : undefined,
-    chainId: sepolia.id, query: { enabled: previousRound !== undefined && luckyNumberAfter !== undefined },
+    abi,
+    address: CONTRACT_ADDRESS,
+    functionName: 'getPlayersByNumberGuess',
+    args:
+      previousRound !== undefined && luckyNumberAfter !== undefined
+        ? [previousRound, BigInt(luckyNumberAfter)]
+        : undefined,
+    chainId: sepolia.id,
+    query: { enabled: previousRound !== undefined && luckyNumberAfter !== undefined },
   });
 
-  const isLoading = isCurrentRoundLoading || isLuckyNumberLoading || isFirstPrizeLoading || isSecondPrizeLoading || isWinnersExactLoading || isWinnersBeforeLoading || isWinnersAfterLoading;
-  const isError = isCurrentRoundError || isLuckyNumberError || isWinnersExactError;
+  const isLoading =
+    isCurrentRoundLoading ||
+    isLuckyNumberLoading ||
+    isFirstPrizeLoading ||
+    isLastWeekFirstPrizeLoading ||
+    isSecondPrizeLoading ||
+    isWinnersExactLoading ||
+    isWinnersBeforeLoading ||
+    isWinnersAfterLoading;
+
+  const isError =
+    isCurrentRoundError || isLuckyNumberError || isWinnersExactError;
 
   if (isLoading) {
     return <div className="status-message">Loading prizes and winners...</div>;
   }
-  
-  if (isError) {
-    return <div className="status-message error">Error fetching data. Check your network connection or contract address.</div>;
-  }
 
-  const [isDark, setIsDark] = useState(false);
+  if (isError) {
+    return (
+      <div className="status-message error">
+        Error fetching data. Check your network connection or contract address.
+      </div>
+    );
+  }
 
   // const [betNumber, setBetNumber] = useState('');
 
@@ -170,7 +224,7 @@ function LuckyBillionaire() {
               <div className="info-section">
                 <div className="info-card">
                   <h3>CURRENT JACKPOT</h3>
-                  <p className="highlighted-text">14 ETH</p>
+                  <p className="highlighted-text">{Number(firstPrizeInEther).toFixed(4)} SepoliaETH</p>
                 </div>
               </div>
               <div className="action-section">

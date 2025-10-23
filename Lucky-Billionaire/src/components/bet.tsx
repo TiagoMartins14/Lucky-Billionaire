@@ -1,8 +1,9 @@
 import { useWriteContract } from 'wagmi';
 import { abi } from "../abi.ts";
-import { CONTRACT_ADDRESS, MAX_LUCKY_NUMBER, MIN_LUCKY_NUMBER, BET_COST} from "../constants.tsx"
+import { CONTRACT_ADDRESS, MAX_LUCKY_NUMBER, MIN_LUCKY_NUMBER, BET_COST, SEPOLIA_CHAIN_ID} from "../constants.tsx"
 import { useEffect, useState } from 'react'
 import { parseEther } from 'viem';
+import { config } from '../config.tsx'
 
 export function Bet () {
 	const { writeContract, isPending, isSuccess, isError, error } = useWriteContract()
@@ -14,13 +15,20 @@ export function Bet () {
 			return;
 		}
 
+		console.log("Sending transaction to:", CONTRACT_ADDRESS);
+		console.log("Chain ID:", 11155111);
+		console.log("Value:", parseEther(BET_COST).toString());
+
+
 		writeContract({
+			config,
 			abi,
 			address: CONTRACT_ADDRESS,
 			functionName: 'savePlayerGuess',
 			args: [BigInt(bet)],
 			value: parseEther(BET_COST),
-			gas: 300000n,
+			chainId: SEPOLIA_CHAIN_ID,
+			gas: 500000n,
 		});
 	};
 
