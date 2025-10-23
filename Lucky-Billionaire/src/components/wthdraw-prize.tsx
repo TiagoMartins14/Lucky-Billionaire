@@ -11,6 +11,7 @@ export function WithdrawPrize () {
 			address: CONTRACT_ADDRESS,
 			functionName: 'claimPrize',
 			args: [],
+			gas: 500000n,
 		});
 	};
 
