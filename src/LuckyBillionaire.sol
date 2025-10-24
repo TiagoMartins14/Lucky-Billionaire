@@ -132,14 +132,14 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @notice Announces a Lucky Number, distributes prizes and starts a new round.
-     * @notice Lucky Billionaire is paused between the announcement and the start of a new round.
+     * @notice Starts the process for a new round.
+     * @dev Pauses the contract and requests a random number from Chainlink VRF.
+     *      Prizes are not distributed immediately; they are handled asynchronously
+     *      once the VRF callback (`fulfillRandomWords`) is triggered.
      */
-    function StartNewRound() external onlyOwner {
+    function startNewRound() external onlyOwner {
         pauseLuckyBillionaire();
-        distributePrizes();
-        startNewRoundCleanUp();
-        resumeLuckyBillionaire();
+        requestRandomNumber();
     }
 
     /**
@@ -255,15 +255,23 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
 
     /**
      * @notice Callback function called by the Chainlink VRF Coordinator after the random number request is fulfilled.
-     * @dev This function overrides 'VRFConsumerBaseV2Plus.fulfillRandomWords'. It receives the random words array,
-     *      takes the first element, and maps it into a number between 1 and 50 (inclusive) for 's_luckyNumber'.
-     *      The '_requestId' parameter is unused but required to match the VRF callback signature.
+     * @dev Overrides 'VRFConsumerBaseV2Plus.fulfillRandomWords'. 
+     *      - Maps the first random word into a number between 1 and 50 for 's_luckyNumber'.
+     *      - Handles prize distribution and new round cleanup once the random number is available.
+     *      - Resumes the contract after all state updates.
      * @param _randomWords The array of random numbers returned by the VRF Coordinator.
      */
-    function fulfillRandomWords(uint256, /*_requestId*/ uint256[] calldata _randomWords) internal override {
+    function fulfillRandomWords(uint256, uint256[] calldata _randomWords) internal override {
         uint256 rawRandom = _randomWords[0];
         s_luckyNumber[s_round] = (rawRandom % MAXIMUM_LUCKY_NUMBER) + 1;
+
         emit AnnounceLuckyNumber(s_luckyNumber[s_round], s_round);
+
+        distributeFirstPrize();
+        distributeSecondPrize();
+        startNewRoundCleanUp();
+
+        resumeLuckyBillionaire();
     }
 
     /**
@@ -370,10 +378,8 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
 
         if (
             s_playersByNumberGuess[s_round][s_luckyNumber[s_round]].length > 0
-                && (
-                    s_playersByNumberGuess[s_round][beforeLuckyNumber].length > 0
-                        || s_playersByNumberGuess[s_round][afterLuckyNumber].length > 0
-                )
+                && (s_playersByNumberGuess[s_round][beforeLuckyNumber].length > 0
+                    || s_playersByNumberGuess[s_round][afterLuckyNumber].length > 0)
         ) {
             s_totalPot = 0;
         } else if (
@@ -384,10 +390,8 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
             s_totalPot = s_secondPrize;
         } else if (
             s_playersByNumberGuess[s_round][s_luckyNumber[s_round]].length == 0
-                && (
-                    s_playersByNumberGuess[s_round][beforeLuckyNumber].length > 0
-                        || s_playersByNumberGuess[s_round][afterLuckyNumber].length > 0
-                )
+                && (s_playersByNumberGuess[s_round][beforeLuckyNumber].length > 0
+                    || s_playersByNumberGuess[s_round][afterLuckyNumber].length > 0)
         ) {
             s_totalPot = s_firstPrize;
         }
