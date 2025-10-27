@@ -28,7 +28,9 @@ function LuckyBillionaire() {
     lastWeekLuckyNumber,
     firstPrizeInEther,
     lastWeekFirstPrize,
+    lastWeekFirstPrizeInEther,
     lastWeekSecondPrize,
+    lastWeekSecondPrizeInEther,
     winnersExact,
     winnersBefore,
     winnersAfter,
@@ -98,7 +100,7 @@ function LuckyBillionaire() {
               <InfoCard
                 className="info-card" 
                 title="First Prize" 
-                message={`${lastWeekFirstPrize?.toString() ?? "N/A"} ETH`}
+                message={`${Number(lastWeekFirstPrizeInEther).toFixed(4)} Seploia ETH`}
               />
 
               <InfoCard 
@@ -110,7 +112,7 @@ function LuckyBillionaire() {
               <InfoCard 
                 className="info-card" 
                 title="Second Prize" 
-                message={`${lastWeekSecondPrize?.toString() ?? "N/A"} ETH`}
+                message={`${Number(lastWeekSecondPrizeInEther).toFixed(4)} Sepolia ETH`}
               />
                         
               <InfoCard 
