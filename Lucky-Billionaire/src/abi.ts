@@ -61,13 +61,6 @@ export const abi = [
 		},
 		{
 			"type": "function",
-			"name": "StartNewRound",
-			"inputs": [],
-			"outputs": [],
-			"stateMutability": "nonpayable"
-		},
-		{
-			"type": "function",
 			"name": "acceptOwnership",
 			"inputs": [],
 			"outputs": [],
@@ -530,6 +523,13 @@ export const abi = [
 		},
 		{
 			"type": "function",
+			"name": "startNewRound",
+			"inputs": [],
+			"outputs": [],
+			"stateMutability": "nonpayable"
+		},
+		{
+			"type": "function",
 			"name": "transferOwnership",
 			"inputs": [
 				{
@@ -551,6 +551,13 @@ export const abi = [
 					"internalType": "uint256"
 				}
 			],
+			"outputs": [],
+			"stateMutability": "nonpayable"
+		},
+		{
+			"type": "function",
+			"name": "withdrawAll",
+			"inputs": [],
 			"outputs": [],
 			"stateMutability": "nonpayable"
 		},
