@@ -39,12 +39,16 @@ export function useLuckyContractData() {
     chainId: sepolia.id,
   });
 
+  const lastWeekFirstPrizeInEther = lastWeekFirstPrize ? formatEther(BigInt(lastWeekFirstPrize)) : "0";
+
   const { data: lastWeekSecondPrize, isLoading: isSecondPrizeLoading } = useReadContract({
     abi,
     address: CONTRACT_ADDRESS,
     functionName: 'getLastSecondPrize',
     chainId: sepolia.id,
   });
+
+  const lastWeekSecondPrizeInEther = lastWeekSecondPrize ? formatEther(BigInt(lastWeekSecondPrize)) : "0";
 
   const { data: winnersExact, isLoading: isWinnersExactLoading, isError: isWinnersExactError } = useReadContract({
     abi,
@@ -117,7 +121,9 @@ export function useLuckyContractData() {
     lastWeekLuckyNumber,
     firstPrizeInEther,
     lastWeekFirstPrize,
+    lastWeekFirstPrizeInEther,
     lastWeekSecondPrize,
+    lastWeekSecondPrizeInEther,
     winnersExact,
     winnersBefore,
     winnersAfter,
