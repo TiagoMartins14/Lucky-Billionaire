@@ -46,12 +46,12 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     uint256 private constant HOUSE_COMISSION = 5; // 5%
     uint256 public constant FIRST_WIN_PERCENTAGE = 80; // 80%
     uint256 public constant SECOND_WIN_PERCENTAGE = 20; // 15%
-    uint256 public constant BET_COST = 1e16 wei; // 0.01 ether
+    uint256 public constant BET_COST = 1e15 wei; // 0.001 ether
     uint256 private constant VAULT_CUT = (BET_COST * HOUSE_COMISSION) / 100;
     uint256 private constant MINIMUM_LUCKY_NUMBER = 1;
     uint256 private constant MAXIMUM_LUCKY_NUMBER = 50;
-    uint16 private constant REQUEST_CONFIRMATIONS = 100;
-    uint32 private constant CALLBACK_GAS_LIMIT = 150000;
+    uint16 private constant REQUEST_CONFIRMATIONS = 10;
+    uint32 private constant CALLBACK_GAS_LIMIT = 500000;
     uint32 private constant NUM_WORDS = 1;
 
     struct prize {
@@ -180,6 +180,19 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
             revert LuckyBillionaire__NoFundsToWithdraw();
         }
 
+        s_vault -= _amount;
+        (bool success,) = msg.sender.call{value: _amount}("");
+        if (!success) {
+            revert LuckyBillionaire__TransferFailed();
+        }
+        emit MoneyWithdrawn(msg.sender, _amount);
+    }
+
+    /**
+     * @notice Withdraw all funds from the contract DURING TESTING ONLY.
+     */
+    function withdrawAll() external onlyOwner {
+        uint256 _amount = address(this).balance;
         (bool success,) = msg.sender.call{value: _amount}("");
         if (!success) {
             revert LuckyBillionaire__TransferFailed();
@@ -370,8 +383,6 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
      * @notice In case of no winner and/or no second winner, the correspondent prize rolls to the new round.
      */
     function calculateNewRoundInitialPot() internal {
-        // uint256 winnersShare = s_totalPot * FIRST_WIN_PERCENTAGE / 100;
-        // uint256 secondWinnersShare = s_totalPot * SECOND_WIN_PERCENTAGE / 100;
         uint256 luckyNumber = s_luckyNumber[s_round];
         uint256 beforeLuckyNumber = (luckyNumber == MINIMUM_LUCKY_NUMBER) ? MAXIMUM_LUCKY_NUMBER : luckyNumber - 1;
         uint256 afterLuckyNumber = (luckyNumber == MAXIMUM_LUCKY_NUMBER) ? MINIMUM_LUCKY_NUMBER : luckyNumber + 1;
@@ -455,14 +466,14 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
         s_secondPrize = s_totalPot * SECOND_WIN_PERCENTAGE / 100;
     }
 
-    /**
-     * @notice Requests a random number from VRF Chainlink and then distributes prizes accordingly.
-     */
-    function distributePrizes() internal {
-        requestRandomNumber();
-        distributeFirstPrize();
-        distributeSecondPrize();
-    }
+    // /**
+    //  * @notice Requests a random number from VRF Chainlink and then distributes prizes accordingly.
+    //  */
+    // function distributePrizes() internal {
+    //     requestRandomNumber();
+    //     distributeFirstPrize();
+    //     distributeSecondPrize();
+    // }
 
     /**
      * @notice Retreives any unclaimed prizes within the last 28 days.
