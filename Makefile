@@ -10,7 +10,7 @@ deploy:
 	forge script script/DeployLuckyBillionaire.s.sol:DeployLuckyBillionaire --rpc-url $$SEPOLIA_RPC_URL --account defaultKey --sender $$ACCOUNT_ADDRESS --broadcast -vvvv
 
 new_round:
-	forge script script/StartNewRound.s.sol --rpc-url $$SEPOLIA_RPC_URL --broadcast -vvvv
+	forge script script/StartNewRound.s.sol --rpc-url $$SEPOLIA_RPC_URL --account defaultKey --broadcast -vvvv
 
 withdraw_vault:
-	forge script script/WithdrawAll.s.sol --rpc-url $$SEPOLIA_RPC_URL --broadcast -vvvv
+	forge script script/WithdrawAll.s.sol --rpc-url $$SEPOLIA_RPC_URL --account defaultKey --broadcast -vvvv
