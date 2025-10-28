@@ -150,13 +150,18 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
         uint256 amount = 0;
         prize[] storage playerPrizes = s_pendingWithdrawals[msg.sender];
 
-        for (uint256 i = 0; i < playerPrizes.length; i++) {
+        uint256 i = 0;
+        while (i < playerPrizes.length) {
             if (block.timestamp - playerPrizes[i].dateWon <= 28 days) {
                 amount += playerPrizes[i].amountWon;
+
                 playerPrizes[i] = playerPrizes[playerPrizes.length - 1];
                 playerPrizes.pop();
+            } else {
+                i++;
             }
         }
+
         if (amount == 0) {
             revert LuckyBillionaire__NoFundsToWithdraw();
         }
@@ -165,6 +170,7 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
         if (!success) {
             revert LuckyBillionaire__TransferFailed();
         }
+
         emit PrizeClaimed(msg.sender, amount);
     }
 
@@ -268,7 +274,7 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
 
     /**
      * @notice Callback function called by the Chainlink VRF Coordinator after the random number request is fulfilled.
-     * @dev Overrides 'VRFConsumerBaseV2Plus.fulfillRandomWords'. 
+     * @dev Overrides 'VRFConsumerBaseV2Plus.fulfillRandomWords'.
      *      - Maps the first random word into a number between 1 and 50 for 's_luckyNumber'.
      *      - Handles prize distribution and new round cleanup once the random number is available.
      *      - Resumes the contract after all state updates.
