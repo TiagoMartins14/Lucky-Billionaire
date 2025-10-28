@@ -11,16 +11,9 @@ interface ILuckyBillionaire {
 
 contract StartNewRoundScript is Script {
     function run() external {
-        uint256 pk = vm.envUint("PRIVATE_KEY");
-        address caller = vm.addr(pk);
-        vm.startBroadcast(pk);
+        vm.startBroadcast();
 
         ILuckyBillionaire lucky = ILuckyBillionaire(vm.envAddress("CONTRACT_ADDRESS"));
-
-        console.log("Contract owner:", lucky.owner());
-        console.log("Calling from:", caller);
-
-        require(lucky.owner() == caller, "You are not the owner!");
 
         uint256 roundBefore = lucky.getRound();
         console.log("Round before:", roundBefore);
