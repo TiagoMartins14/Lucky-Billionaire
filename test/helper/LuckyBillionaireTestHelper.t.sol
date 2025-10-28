@@ -57,10 +57,6 @@ contract LuckyBillionaireTestHelper is LuckyBillionaire {
         updateStateVariablesFornewRound();
     }
 
-    function exposedDistributePrizes() external {
-        distributePrizes();
-    }
-
     function exposedStartNewRoundCleanUp() external {
         startNewRoundCleanUp();
     }
