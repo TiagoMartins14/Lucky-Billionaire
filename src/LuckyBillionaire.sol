@@ -472,15 +472,6 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
         s_secondPrize = s_totalPot * SECOND_WIN_PERCENTAGE / 100;
     }
 
-    // /**
-    //  * @notice Requests a random number from VRF Chainlink and then distributes prizes accordingly.
-    //  */
-    // function distributePrizes() internal {
-    //     requestRandomNumber();
-    //     distributeFirstPrize();
-    //     distributeSecondPrize();
-    // }
-
     /**
      * @notice Retreives any unclaimed prizes within the last 28 days.
      * @notice Calculates new round's initial pot depending on last round's result.
