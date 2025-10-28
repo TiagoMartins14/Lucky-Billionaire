@@ -7,29 +7,13 @@ import { ConnectWalletButton } from './components/connect-wallet.tsx'
 import { useLuckyContractData } from './utils/smart-contract-getters.tsx'
 import './app.css';
 
-function renderWinners(winners: readonly `0x${string}`[] | undefined) {
-  if (!winners || winners.length === 0) {
-    return <div>No winners this week.</div>;
-  }
-
-  const numberOfWinners = winners.length;
-
-  return (
-    <div className="winner-list">
-      <p>{numberOfWinners}</p>
-    </div>
-  );
-}
-
 function LuckyBillionaire() {
   const [isDark, setIsDark] = useState(false);
 
   const {
     lastWeekLuckyNumber,
     firstPrizeInEther,
-    lastWeekFirstPrize,
     lastWeekFirstPrizeInEther,
-    lastWeekSecondPrize,
     lastWeekSecondPrizeInEther,
     winnersExact,
     winnersBefore,
@@ -50,32 +34,6 @@ function LuckyBillionaire() {
     );
   }
 
-  // const [betNumber, setBetNumber] = useState('');
-
-  // function Bet({ betNumber }: { betNumber: number }) {
-  //   const { writeContract } = useWriteContract();
-  //   const [betMessage, setBetMessage] = useState('');
-
-  //   const handleBet = () => {
-  //     // Check if a valid number is provided
-  //     if (betNumber < MIN_LUCKY_NUMBER || betNumber > MAX_LUCKY_NUMBER) {
-  //       setBetMessage(`Please enter a number between ${MIN_LUCKY_NUMBER} and ${MAX_LUCKY_NUMBER}.`);
-  //       return;
-  //     }
-      
-  //     setBetMessage('Transaction initiated! Check your wallet to confirm.');
-
-  //     writeContract({
-  //       abi,
-  //       address: CONTRACT_ADDRESS,
-  //       functionName: 'savePlayerGuess',
-  //       args: [BigInt(betNumber)],
-  //       value: BigInt('1000000000000000000') // 1 ETH in Wei
-  //     });
-  //   }
-  // };
-
-  // Combine winners for display
   const firstPlaceWinners = winnersExact ?? [];
   const secondPlaceWinners = winnersBefore?.concat(winnersAfter ?? []) ?? [];
 
