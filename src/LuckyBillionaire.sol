@@ -1,41 +1,9 @@
-// Order of Layout
-// Contract elements should be laid out in the following order:
-
-// Pragma statements
-// Import statements
-// Events
-// Errors
-// Interfaces
-// Libraries
-// Contracts
-
-// Inside each contract, library or interface, use the following order:
-
-// Type declarations
-// State variables
-// Events
-// Errors
-// Modifiers
-// Functions
-
-// Order of Functions
-
-// Constructor
-// Receive function (if exists)
-// Falback function (if exists)
-// External
-// Public
-// Internal
-// Private
-// view & pure functions
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
 import {VRFCoordinatorV2_5} from "@chainlink/v0.8/vrf/dev/VRFCoordinatorV2_5.sol";
 import {VRFV2PlusClient} from "@chainlink/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 import {VRFConsumerBaseV2Plus} from "@chainlink/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
-import {ConfirmedOwner} from "@chainlink/v0.8/shared/access/ConfirmedOwner.sol";
 import {ReentrancyGuard} from "@openzeppelin/security/ReentrancyGuard.sol";
 import {Pausable} from "@openzeppelin/security/Pausable.sol";
 
@@ -54,7 +22,7 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     uint32 private constant CALLBACK_GAS_LIMIT = 500000;
     uint32 private constant NUM_WORDS = 1;
 
-    struct prize {
+    struct Prize {
         uint256 amountWon;
         uint256 dateWon;
     }
@@ -63,7 +31,7 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     mapping(uint256 round => mapping(uint256 number => mapping(address player => uint256 timesGuessed))) public
         s_numberGuesses;
     mapping(uint256 round => uint256 number) public s_luckyNumber;
-    mapping(address player => prize[] prizes) public s_pendingWithdrawals;
+    mapping(address player => Prize[] prizes) public s_pendingWithdrawals;
     uint256 public s_round;
     uint256 public s_totalPot;
     uint256 public s_firstPrize; // s_totalPot * FIRST_WIN_PERCENTAGE / 100
@@ -148,7 +116,7 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
      */
     function claimPrize() external nonReentrant {
         uint256 amount = 0;
-        prize[] storage playerPrizes = s_pendingWithdrawals[msg.sender];
+        Prize[] storage playerPrizes = s_pendingWithdrawals[msg.sender];
 
         uint256 i = 0;
         while (i < playerPrizes.length) {
@@ -222,7 +190,7 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
         return s_luckyNumber[round];
     }
 
-    function getPendingWithdrawals(address player) external view returns (prize[] memory prizes) {
+    function getPendingWithdrawals(address player) external view returns (Prize[] memory prizes) {
         return s_pendingWithdrawals[player];
     }
 
@@ -342,7 +310,7 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
 
         for (uint256 i = 0; i < firstPrizeWinners.length; i++) {
             uint256 timesGuessed = s_numberGuesses[s_round][s_luckyNumber[s_round]][firstPrizeWinners[i]];
-            prize memory winnerPrize;
+            Prize memory winnerPrize;
             winnerPrize.amountWon = individualPrizeParcel * timesGuessed;
             winnerPrize.dateWon = block.timestamp;
             s_pendingWithdrawals[firstPrizeWinners[i]].push(winnerPrize);
@@ -368,7 +336,7 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
         for (uint256 i = 0; i < secondPrizeWinnersBeforeNumber.length; i++) {
             uint256 timesGuessedBeforeNumber =
                 s_numberGuesses[s_round][beforeLuckyNumber][secondPrizeWinnersBeforeNumber[i]];
-            prize memory winnerPrize;
+            Prize memory winnerPrize;
             winnerPrize.amountWon = individualPrizeParcel * timesGuessedBeforeNumber;
             winnerPrize.dateWon = block.timestamp;
             s_pendingWithdrawals[secondPrizeWinnersBeforeNumber[i]].push(winnerPrize);
@@ -377,7 +345,7 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
         for (uint256 i = 0; i < secondPrizeWinnersAfterNumber.length; i++) {
             uint256 timesGuessedAfterNumber =
                 s_numberGuesses[s_round][afterLuckyNumber][secondPrizeWinnersAfterNumber[i]];
-            prize memory winnerPrize;
+            Prize memory winnerPrize;
             winnerPrize.amountWon = individualPrizeParcel * timesGuessedAfterNumber;
             winnerPrize.dateWon = block.timestamp;
             s_pendingWithdrawals[secondPrizeWinnersAfterNumber[i]].push(winnerPrize);
@@ -450,7 +418,7 @@ contract LuckyBillionaire is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
      * @dev Helper to process and retrieve expired prizes for a single player.
      */
     function _retreiveFromPlayer(address player) private {
-        prize[] storage playerPrizes = s_pendingWithdrawals[player];
+        Prize[] storage playerPrizes = s_pendingWithdrawals[player];
         for (uint256 k = playerPrizes.length; k > 0; k--) {
             uint256 prizeIndex = k - 1;
             if (block.timestamp - playerPrizes[prizeIndex].dateWon > 28 days) {
