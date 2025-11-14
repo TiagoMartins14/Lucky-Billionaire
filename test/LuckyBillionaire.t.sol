@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {Test, console2} from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {LuckyBillionaireTestHelper} from "test/helper/LuckyBillionaireTestHelper.t.sol";
 import {VRFCoordinatorV2_5Mock} from "@chainlink/v0.8/vrf/test/VRFCoordinatorV2_5Mock.t.sol";
 
@@ -379,7 +379,8 @@ contract LuckyBillionaireTest is Test {
         uint256 previousFirstPrize = lucky.s_firstPrize();
         uint256 previousSecondPrize = lucky.s_secondPrize();
 
-        lucky.exposedDistributePrizes();
+        lucky.exposedDistributeFirstPrize();
+        lucky.exposedDistributeSecondPrize();
         lucky.exposedStartNewRoundCleanUp();
 
         if (timesLuckyNUmberWasGuessed == 0 && timesLuckyNumberWasAlmostGuessed == 0) {
